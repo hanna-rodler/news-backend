@@ -1,0 +1,20 @@
+{
+  "name": "crawler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "author": "Hanna Rodler",
+  "license": "ISC",
+  "devDependencies": {
+    "express": "^4.21.2",
+    "puppeteer": "^23.10.1"
+  },
+  "dependencies": {
+    "@mistralai/mistralai": "^1.3.5",
+    "dotenv": "^16.4.7"
+  }
+}
