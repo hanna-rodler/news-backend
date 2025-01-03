@@ -1,3 +1,13 @@
+import fs from 'fs';
+import path from 'path';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+console.log(__dirname);
+
 export function markQuotes(text) {
     return text.replace(/„.*?“|„.*?“.?/g, match => `[Q]${match}[/Q]`)
     .replace(/".*?"|".*?".?/g, match => `[Q]${match}[/Q]`);
@@ -33,4 +43,30 @@ function extractFiguresAndReplace(text) {
   console.log('figures', figures);
 
   return { updatedText, figures };
+}
+
+
+export function getFormattedDateTime() {
+  const now = new Date();
+  const pad = (num) => num.toString().padStart(2, '0'); // Pads single digits with a leading zero
+
+  const year = now.getFullYear().toString().slice(-2); // Last two digits of the year
+  const month = pad(now.getMonth() + 1); // Months are 0-based
+  const date = pad(now.getDate());
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+
+  return `${year}-${month}-${date}_${hours}-${minutes}`;
+};
+
+export function saveToFile(content, folder, fileName) {
+  const dirPath = path.join(__dirname, folder); 
+  const filePath = path.join(dirPath, fileName);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+
+  // Write content to the file
+  fs.writeFileSync(filePath, content, 'utf8');
+  console.log(`File written: ${filePath}`);
 }
