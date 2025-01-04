@@ -6,7 +6,7 @@ const apiKey = process.env.MISTRAL_API_KEY;
 
 export async function getPrompt(promptName, temp, article) {
   const userPrompt = getSofterPrompt(promptName) + getFormatInstructionWithArticle(article) + getPoliticalRestrictionInstruction(promptName);
-  console.log('user Prompt', promptName);
+  console.log('user Prompt', promptName, "temp", temp);
 
   const client = new Mistral({ apiKey: apiKey });
 

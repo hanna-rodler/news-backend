@@ -5,7 +5,7 @@ export const prompt2_s = 'You are professional german journalist. You excel at r
 export const prompt3_s = 'You are professional german journalist. You excel at rewriting german articles for adults into child-friendly versions. Transform this news story into a child-friendly version while maintaining adult vocabulary. Your target group are german 12 to 16 year olds that have high german text comprehesion skills. Ensure factual correctness. '
 
 // mental illness
-export const prompt4_s = 'You are professional german journalist. You excel at rewriting articles while maintaining factual correctness. Transform this news article into a version that fits your target group. Your target group are people who have PTSD, Anxiety disorders or depression. Ensure factual correctness. '
+export const prompt4_s = 'You are professional german journalist. You excel at rewriting german articles while maintaining factual correctness. Transform this news article into a version that fits your target group. Your german target group are people who have PTSD, Anxiety disorders or depression. Ensure factual correctness. '
 
 export const prompt5_s = "You are professional german journalist. You excel at rewriting german articles in tone while maintaining factual correctness. Your target group are people are are stressed, anxious or tired. Transform this news article into a version that fits this target group's emotional capacity. "
 
