@@ -1,14 +1,36 @@
 import { Mistral } from "@mistralai/mistralai";
 import dotenv from 'dotenv';
+import { getFormatInstructionWithArticle, getSofterPrompt, getPoliticalRestrictionInstruction } from "../utils/mistral.mjs";
 dotenv.config();
 const apiKey = process.env.MISTRAL_API_KEY;
 
-export async function test() {
-  dotenv.config();
-  const apiKey = process.env.MISTRAL_API_KEY;
-  console.log('env', process.env)
-  console.log('apiKey', process.env.MISTRAL_API_KEY);
-  return apiKey;
+export async function getPrompt(promptName, temp, article) {
+  const userPrompt = getSofterPrompt(promptName) + getFormatInstructionWithArticle(article) + getPoliticalRestrictionInstruction(promptName);
+  console.log('user Prompt', promptName);
+
+  const client = new Mistral({ apiKey: apiKey });
+
+  const chatResponse = await client.chat.complete({
+    model: "mistral-large-latest",
+    messages: [
+      { role: "user", content: userPrompt },
+    ],
+    temperature: Number(temp),
+    random_seed: 1698341829,
+    responseFormat: {
+      type: "json_object",
+    },
+    n: 3,
+    safe_prompt: false
+  });
+
+  let rewrittenText = [];
+
+  // console.log("Chat:", chatResponse.choices);
+  rewrittenText[0] = JSON.parse(chatResponse.choices[0].message.content);
+  rewrittenText[1] = JSON.parse(chatResponse.choices[1].message.content);
+  rewrittenText[2] = JSON.parse(chatResponse.choices[2].message.content);
+  return rewrittenText;
 }
 
 export async function getPrompt9c(temp, article, lead, title) {

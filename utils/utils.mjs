@@ -15,15 +15,17 @@ export function markQuotes(text) {
 
 export function cleanContent(text) {
     const cleanedText = text
-    .replace(/<div class="story-banner story-horizontal-ad"[\s\S]*?<\/div>/g, '') // Remove adworx information and its children
-    .replace(/<div class="adworx-wrapper"[\s\S]*?<\/div>/g, '') // Remove adworx information and its children
+    .replace(/<div class="story-banner story-horizontal-ad"[\s\S]*?<\/div>/g, '')
+    // Remove adworx information and its children
+    .replace(/<div class="adworx-wrapper"[\s\S]*?<\/div>/g, '')
+    .replace(/<div id="adworx-content"[\s\S]*?<\/div>/g, '')
     .replace(/<aside class="linkcard"[\s\S]*?<\/aside>/g, '')
     .replace(/\n+/g, '')
     .trim();
 
     const articleAndFigures = extractFiguresAndReplace(cleanedText);
     return {
-        cleanedText: articleAndFigures.updatedText,
+        cleanedText: articleAndFigures.updatedText.trim(),
         figures: articleAndFigures.figures
     }
 }
@@ -39,8 +41,6 @@ function extractFiguresAndReplace(text) {
     figures.push(match.trim()); // Save the <figure> content
     return '<<fig>>';    // Replace with <<fig>>
   });
-
-  console.log('figures', figures);
 
   return { updatedText, figures };
 }
