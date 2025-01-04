@@ -45,7 +45,7 @@ app.get("/mistral", async function(req, res) {
   let temp = query.temp;
   const articleId = query.articleId
   if (temp == undefined || temp == '') {
-    temp = 0.5; // TODO: default wert
+    temp = 0.3;
   }
   if(articleId === undefined || articleId === '') {
     res.status(400);
