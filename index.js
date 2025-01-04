@@ -5,7 +5,7 @@ import { scrapeWebsiteDetail, scrapeOrfHome } from './features/webScraper.mjs';
 // import { title, article, lead } from './articles/Trump-Grenell.js';
 // import { title, article, lead } from './articles/israel-klinikdirektor.js';
 import { article } from './articles/femizid.js';
-import { getArticle } from './utils/mistral.mjs';
+import { getArticle, isPromptNameValid } from './utils/mistral.mjs';
 
 var app = express();
 app.get("/orf", async function(request, response) {
@@ -40,13 +40,26 @@ app.get("/mistral/prompt7b", async function(req, res) {
 })
 
 app.get("/mistral", async function(req, res) {
-  // TODO: check for temp, article and promptName defined, otherwise use default temp or throw error
-
-  // TODO: get article via id.
   const query = req.query;
   const promptName = query.promptName;
-  const temp = query.temp;
-  const article = getArticle(query.articleId);
+  let temp = query.temp;
+  const articleId = query.articleId
+  if (temp == undefined || temp == '') {
+    temp = 0.5; // TODO: default wert
+  }
+  if(articleId === undefined || articleId === '') {
+    res.status(400);
+    res.send("Error: Article id is not defined or invalid");
+  }
+  if(!isPromptNameValid(promptName)) {
+    res.status(400);
+    res.send("Error: Invalid prompt Name.")
+  }
+  const article = getArticle(articleId);
+  if(article == undefined) {
+    res.status(400)
+    res.send("Error: Article id does not exist.");
+  }
   await getPrompt(promptName, temp, article)
   .then((result) => { res.send(result)})
   .catch((error) => {console.log('error', error); res.send(error)})

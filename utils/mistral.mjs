@@ -1,5 +1,5 @@
-import { prompt1_s, prompt2_s, prompt3_s, prompt4_s, prompt6_s, prompt7_s, prompt8_s, prompt9_s, prompt10_s, prompt11_s } from './../prompts/softer.mjs';
-import { prompt1_vs, prompt2_vs, prompt3_vs, prompt4_vs, prompt6_vs, prompt7_vs } from './../prompts/verySoft.mjs';
+import { prompt1_s, prompt2_s, prompt3_s, prompt4_s, prompt5_s, prompt6_s, prompt7_s, prompt8_s, prompt9_s, prompt10_s, prompt11_s } from './../prompts/softer.mjs';
+import { prompt1_vs, prompt2_vs, prompt3_vs, prompt4_vs, prompt5_vs, prompt6_vs, prompt7_vs } from './../prompts/verySoft.mjs';
 import { article_3377004, article_3378675, article_3378969, article_3378984, article_3379013 } from '../articles/testingSample.mjs';
 
 const softerPrompts = {
@@ -76,6 +76,10 @@ export function getSofterPrompt(promptName) {
 
 export function getVerySoftPrompt(promptName) {
     return verySoftPrompts[promptName]
+}
+
+export function isPromptNameValid(promptName) {
+  return Object.keys(softerPrompts).includes(promptName) || Object.keys(verySoftPrompts).includes(promptName);
 }
 
 
