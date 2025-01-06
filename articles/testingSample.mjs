@@ -68,3 +68,29 @@ export const article_3378969 = {
     "date": "14.12.2024 15.05",
     "footer": "red, ORF.at/<a href=\"https://orf.at/stories/impressum-nachrichtenagenturen/\">Agenturen</a>"
 }
+
+// TODO: remove video <div class=\"video tvtheklive oonmedia-video loading oonmedia-placeholder\" 
+
+// Stocker FPÖ
+export const article_3380874 = {
+    "title": "Stocker zu Verhandlungen mit FPÖ bereit",
+    "lead": null,
+    "leadWithQ": null,
+    "content": "<p>ÖVP-Generalsekretär Christian Stocker, frisch designierter interimistischer ÖVP-Chef, hat eben eine erste Stellungnahme abgegeben.</p><p>Stocker dankte zunächst Karl Nehammer für seine Arbeit als ÖVP-Chef und Kanzler. Er begrüßte das geplante Treffen von Bundespräsident Alexander Van der Bellen mit FPÖ-Chef Herbert Kickl. Er werde eine Einladung der FPÖ, sofern sie erfolge, zu Koalitionsverhandlungen annehmen.</p><h2>Rasche Regierungsbildung wichtig</h2><p>Stocker verwies selbst auf seine eigene harsche Kritik an der FPÖ und an Kickl. Die Republik brauche aber rasch eine Regierung, das habe Priorität. Die ÖVP werde sich der staatspolitischen Aufgabe nicht entziehen, so Stocker.</p><p>Ob er als Vizekanzler zur Verfügung stehen würde, beantwortete Stocker nicht.</p>",
+    "contentWithQ": "<p>ÖVP-Generalsekretär Christian Stocker, frisch designierter interimistischer ÖVP-Chef, hat eben eine erste Stellungnahme abgegeben.</p><p>Stocker dankte zunächst Karl Nehammer für seine Arbeit als ÖVP-Chef und Kanzler. Er begrüßte das geplante Treffen von Bundespräsident Alexander Van der Bellen mit FPÖ-Chef Herbert Kickl. Er werde eine Einladung der FPÖ, sofern sie erfolge, zu Koalitionsverhandlungen annehmen.</p><h2>Rasche Regierungsbildung wichtig</h2><p>Stocker verwies selbst auf seine eigene harsche Kritik an der FPÖ und an Kickl. Die Republik brauche aber rasch eine Regierung, das habe Priorität. Die ÖVP werde sich der staatspolitischen Aufgabe nicht entziehen, so Stocker.</p><p>Ob er als Vizekanzler zur Verfügung stehen würde, beantwortete Stocker nicht.</p>",
+    "figures": [],
+    "date": "05.01.2025 15.06",
+    "footer": "red, ORF.at"
+}
+
+// Gaza Tote Angriff
+export const article_3380763 = {
+    "title": "Viele Tote bei israelischen Angriffen in Gaza gemeldet",
+    "lead": null,
+    "leadWithQ": null,
+    "content": "<p>Die israelische Armee hat bei mehreren Angriffen im Gazastreifen einem Bericht der palästinensischen Nachrichtenagentur WAFA zufolge mindestens 41 Menschen getötet. Zahlreiche weitere Menschen seien bei den Angriffen in Dschabalija im Norden sowie Deir al-Balah im Zentrum und Rafah im Süden des Küstenstreifens verletzt worden, schrieb die Agentur unter Berufung auf Angaben von gestern aus medizinischen Kreisen in dem Küstenstreifen.</p><p>Von israelischer Seite gab es bisher keine Angaben zum Kampfgeschehen oder zu dem Bericht. Später gab das Militär bekannt, in Deir al-Balah mit einem Präzisionsschlag vier bewaffnete Hamas-Kämpfer in einem Fahrzeug getroffen zu haben. Die Angaben beider Seiten ließen sich nicht unabhängig verifizieren.</p><h2>Großer Gebäudekomplex gesprengt</h2><p>In Beit Hanun im äußersten Nordosten des Gazastreifens sprengte die israelische Armee nach eigenen Angaben einen großen Gebäudekomplex. Die nur etwa drei Kilometer von der israelischen Stadt Sderot entfernten Gebäude seien mit ihren Panzerabwehrstellungen, Tunneln und Abschussrampen für Raketenangriffe auf Israel eine Gefahr gewesen, erklärte die Armee.</p><p>Palästinenser werfen Israel vor, es wolle den gesamten Norden des Gazastreifens entvölkern. Rechtsextreme Kreise in Israel fordern die Errichtung von Siedlungen im Gazastreifen. Regierungschef Benjamin Netanjahu hat jedoch mehrmals versichert, das sei nicht geplant.</p>",
+    "contentWithQ": "<p>Die israelische Armee hat bei mehreren Angriffen im Gazastreifen einem Bericht der palästinensischen Nachrichtenagentur WAFA zufolge mindestens 41 Menschen getötet. Zahlreiche weitere Menschen seien bei den Angriffen in Dschabalija im Norden sowie Deir al-Balah im Zentrum und Rafah im Süden des Küstenstreifens verletzt worden, schrieb die Agentur unter Berufung auf Angaben von gestern aus medizinischen Kreisen in dem Küstenstreifen.</p><p>Von israelischer Seite gab es bisher keine Angaben zum Kampfgeschehen oder zu dem Bericht. Später gab das Militär bekannt, in Deir al-Balah mit einem Präzisionsschlag vier bewaffnete Hamas-Kämpfer in einem Fahrzeug getroffen zu haben. Die Angaben beider Seiten ließen sich nicht unabhängig verifizieren.</p><h2>Großer Gebäudekomplex gesprengt</h2><p>In Beit Hanun im äußersten Nordosten des Gazastreifens sprengte die israelische Armee nach eigenen Angaben einen großen Gebäudekomplex. Die nur etwa drei Kilometer von der israelischen Stadt Sderot entfernten Gebäude seien mit ihren Panzerabwehrstellungen, Tunneln und Abschussrampen für Raketenangriffe auf Israel eine Gefahr gewesen, erklärte die Armee.</p><p>Palästinenser werfen Israel vor, es wolle den gesamten Norden des Gazastreifens entvölkern. Rechtsextreme Kreise in Israel fordern die Errichtung von Siedlungen im Gazastreifen. Regierungschef Benjamin Netanjahu hat jedoch mehrmals versichert, das sei nicht geplant.</p>",
+    "figures": [],
+    "date": "04.01.2025 19.00",
+    "footer": "red, ORF.at/<a href=\"https://orf.at/stories/impressum-nachrichtenagenturen/\">Agenturen</a>"
+}
