@@ -1,28 +1,37 @@
 import { Mistral } from "@mistralai/mistralai";
-import dotenv from 'dotenv';
-import { getFormatInstructionWithArticle, getSofterPrompt, getPoliticalRestrictionInstruction } from "../utils/mistral.mjs";
+import dotenv from "dotenv";
+import {
+  getFormatInstructionWithArticle,
+  getSofterPrompt,
+  getPoliticalRestrictionInstruction,
+  getVerySoftPrompt,
+} from "../utils/mistral.mjs";
 dotenv.config();
 const apiKey = process.env.MISTRAL_API_KEY;
 
 export async function getPrompt(promptName, temp, article) {
-  const userPrompt = getSofterPrompt(promptName) + getFormatInstructionWithArticle(article) + getPoliticalRestrictionInstruction(promptName);
-  console.log('user Prompt', promptName, "temp", temp);
+  // const userPrompt = getSofterPrompt(promptName);
+  const userPrompt =
+    getVerySoftPrompt(promptName) + getFormatInstructionWithArticle(article);
+  // getPoliticalRestrictionInstruction(promptName);
+  console.log("user Prompt", promptName, "temp", temp);
 
   const client = new Mistral({ apiKey: apiKey });
+  console.log("init client");
 
   const chatResponse = await client.chat.complete({
     model: "mistral-large-latest",
-    messages: [
-      { role: "user", content: userPrompt },
-    ],
+    messages: [{ role: "user", content: userPrompt }],
     temperature: Number(temp),
     random_seed: 1698341829,
     responseFormat: {
       type: "json_object",
     },
     n: 3,
-    safe_prompt: false
+    safe_prompt: false,
   });
+
+  console.log("got chat response");
 
   let rewrittenText = [];
 
@@ -47,38 +56,43 @@ export async function getPrompt9c(temp, article, lead, title) {
 
   // const restrictions = "Do not add any aditional interpretation like how important the topic is, unless the article states that."
 
-  const restrictions = "Do not write things like \"important topic\" unless the article directly says that";
+  const restrictions =
+    'Do not write things like "important topic" unless the article directly says that';
   // const restrictions =
-  //   "Ensure that all direct quotes are preserved exactly as they are. Do not alter the words within the quotes. Use the following format to mark the quotes: [Q]...[/Q]."; 
+  //   "Ensure that all direct quotes are preserved exactly as they are. Do not alter the words within the quotes. Use the following format to mark the quotes: [Q]...[/Q].";
 
   let format;
   let userText;
 
-  if(lead !== '') {
+  if (lead !== "") {
     const articleWithLead = {
       title: title,
       lead: lead,
       content: article,
     };
 
-    format =  "Return the rewritten article in a json_object with they keys 'title', 'lead' and 'content'. "
+    format =
+      "Return the rewritten article in a json_object with they keys 'title', 'lead' and 'content'. ";
 
-    userText = "The article title is provided in the json with the key 'title'. The article lead is provided in the json with the key 'lead'. The article body is provided in the json with the key 'content'." +
-        JSON.stringify(articleWithLead);
+    userText =
+      "The article title is provided in the json with the key 'title'. The article lead is provided in the json with the key 'lead'. The article body is provided in the json with the key 'content'." +
+      JSON.stringify(articleWithLead);
   } else {
     const articleWithoutLead = {
       title: title,
       content: article,
     };
 
-    format = "Return the rewritten article in a json_object with they keys 'title' and 'content'. "
+    format =
+      "Return the rewritten article in a json_object with they keys 'title' and 'content'. ";
 
-    userText =  "The article title is provided in the json with the key 'title'. The article body is provided in the json with the key 'content'." +
-    JSON.stringify(articleWithoutLead)
+    userText =
+      "The article title is provided in the json with the key 'title'. The article body is provided in the json with the key 'content'." +
+      JSON.stringify(articleWithoutLead);
   }
 
   const systemMessage_9c =
-  persona_9c + audience_9c + instruction_9c + tone_9c + format + userText;
+    persona_9c + audience_9c + instruction_9c + tone_9c + format + userText;
 
   console.log("system Message", systemMessage_9c);
   console.log("user message", userText);
@@ -101,16 +115,14 @@ export async function getPrompt9c(temp, article, lead, title) {
   // });
   const chatResponse = await client.chat.complete({
     model: "mistral-large-latest",
-    messages: [
-      { role: "user", content: systemMessage_9c },
-    ],
+    messages: [{ role: "user", content: systemMessage_9c }],
     temperature: Number(temp),
     random_seed: 1698341829,
     responseFormat: {
       type: "json_object",
     },
     n: 2,
-    safe_prompt: false
+    safe_prompt: false,
   });
 
   let rewrittenText = [];
@@ -125,38 +137,40 @@ export async function getPrompt9c(temp, article, lead, title) {
     ""
   );
   return rewrittenText;
-};
+}
 
 export async function getPrompt7b(temp, title, lead, article) {
-  
-
   const restrictions =
     "Ensure that all direct quotes are preserved exactly as they are. Do not alter the words within the quotes. Use the following format to mark the quotes: [Q]...[/Q]. "; // Keep the main topic of the article, even if it may be emotionally distressing. // you are forbidden to change any form of direct speech delimited by \\"   // Do not change direct speech delimited by \\"
   // Do not write things like "important topic" unless the article directly says that.
   let format;
   let userText;
 
-  if(lead !== '') {
+  if (lead !== "") {
     const articleWithLead = {
       title: title,
       lead: lead,
       content: article,
     };
 
-    format =  "Return the rewritten article in a json_object with they keys 'title', 'lead' and 'content'. "
+    format =
+      "Return the rewritten article in a json_object with they keys 'title', 'lead' and 'content'. ";
 
-    userText = "The article title is provided in the json object article with the key 'title'. The article lead is provided in the json object with the key 'lead'. The article body is provided in the json object with the key 'content'." +
-        JSON.stringify(articleWithLead);
+    userText =
+      "The article title is provided in the json object article with the key 'title'. The article lead is provided in the json object with the key 'lead'. The article body is provided in the json object with the key 'content'." +
+      JSON.stringify(articleWithLead);
   } else {
     const articleWithoutLead = {
       title: title,
       content: article,
     };
 
-    format = "Return the rewritten article in a json_object with they keys 'title' and 'content'. "
+    format =
+      "Return the rewritten article in a json_object with they keys 'title' and 'content'. ";
 
-    userText =  "The article title is provided in the json with the key 'title'. The article body is provided in the json with the key 'content'." +
-    JSON.stringify(articleWithoutLead)
+    userText =
+      "The article title is provided in the json with the key 'title'. The article body is provided in the json with the key 'content'." +
+      JSON.stringify(articleWithoutLead);
   }
 
   // 7b
@@ -177,9 +191,7 @@ export async function getPrompt7b(temp, title, lead, article) {
 
   const chatResponse = await client.chat.complete({
     model: "mistral-large-latest",
-    messages: [
-      { role: "user", content: systemMessage_7b },
-    ],
+    messages: [{ role: "user", content: systemMessage_7b }],
     temperature: Number(temp),
     random_seed: 1456,
     responseFormat: {
@@ -200,4 +212,4 @@ export async function getPrompt7b(temp, title, lead, article) {
     ""
   );
   return rewrittenText;
-};
+}
