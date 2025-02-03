@@ -35,7 +35,71 @@ export async function getPrompt(promptName, temp, article) {
 
   let rewrittenText = [];
 
-  // console.log("Chat:", chatResponse.choices);
+  console.log("Chat:", chatResponse.choices[0]);
+  rewrittenText[0] = JSON.parse(chatResponse.choices[0].message.content);
+  rewrittenText[1] = JSON.parse(chatResponse.choices[1].message.content);
+  rewrittenText[2] = JSON.parse(chatResponse.choices[2].message.content);
+  return rewrittenText;
+}
+
+export async function getSofterPromptResponse(promptName, temp, article) {
+  const userPrompt =
+    getSofterPrompt(promptName) +
+    getFormatInstructionWithArticle(article, false) +
+    getPoliticalRestrictionInstruction(promptName);
+  console.log("softer user Prompt", promptName, "temp", temp, userPrompt);
+
+  const client = new Mistral({ apiKey: apiKey });
+  console.log("init client");
+
+  const chatResponse = await client.chat.complete({
+    model: "mistral-large-latest",
+    messages: [{ role: "user", content: userPrompt }],
+    temperature: Number(temp),
+    random_seed: 1698341829,
+    responseFormat: {
+      type: "json_object",
+    },
+    n: 3,
+    safe_prompt: false,
+  });
+
+  console.log("got chat response");
+
+  let rewrittenText = [];
+
+  rewrittenText[0] = JSON.parse(chatResponse.choices[0].message.content);
+  rewrittenText[1] = JSON.parse(chatResponse.choices[1].message.content);
+  rewrittenText[2] = JSON.parse(chatResponse.choices[2].message.content);
+  console.log("rewrittenText", rewrittenText[0].title);
+  return rewrittenText;
+}
+
+export async function getVerySoftPromptResponse(promptName, temp, article) {
+  const userPrompt =
+    getVerySoftPrompt(promptName) + getFormatInstructionWithArticle(article);
+  console.log("very soft user Prompt", promptName, "temp", temp, userPrompt);
+
+  const client = new Mistral({ apiKey: apiKey });
+  console.log("init client");
+
+  const chatResponse = await client.chat.complete({
+    model: "mistral-large-latest",
+    messages: [{ role: "user", content: userPrompt }],
+    temperature: Number(temp),
+    random_seed: 1698341829,
+    responseFormat: {
+      type: "json_object",
+    },
+    n: 3,
+    safe_prompt: false,
+  });
+
+  console.log("got chat response", chatResponse);
+
+  let rewrittenText = [];
+
+  console.log("rewrittenText", chatResponse.choices[0].message);
   rewrittenText[0] = JSON.parse(chatResponse.choices[0].message.content);
   rewrittenText[1] = JSON.parse(chatResponse.choices[1].message.content);
   rewrittenText[2] = JSON.parse(chatResponse.choices[2].message.content);
