@@ -17,7 +17,7 @@ export async function getPrompt(promptName, temp, article) {
   console.log("user Prompt", promptName, "temp", temp);
 
   const client = new Mistral({ apiKey: apiKey });
-  console.log("init client");
+  console.log("init client", client);
 
   const chatResponse = await client.chat.complete({
     model: "mistral-large-latest",
