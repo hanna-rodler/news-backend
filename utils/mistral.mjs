@@ -20,6 +20,8 @@ import {
   prompt6_vs,
   prompt7_vs,
   prompt8_vs,
+  prompt9_vs,
+  prompt10_vs,
 } from "./../prompts/verySoft.mjs";
 import {
   article_3377004,
@@ -56,6 +58,8 @@ const verySoftPrompts = {
   prompt6_vs,
   prompt7_vs,
   prompt8_vs,
+  prompt9_vs,
+  prompt10_vs,
 };
 
 const articles = {
@@ -96,7 +100,6 @@ export function getFormatInstructionWithArticle(article) {
     return (
       input_format_with_lead +
       return_format +
-      // example_phrases +
       "Article = " +
       JSON.stringify(articleWithLead)
     );
@@ -109,7 +112,6 @@ export function getFormatInstructionWithArticle(article) {
     return (
       input_format_without_lead +
       return_format +
-      // example_phrases +
       "Article = " +
       JSON.stringify(articleWithoutLead)
     );
