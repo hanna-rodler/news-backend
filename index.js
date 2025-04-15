@@ -31,8 +31,7 @@ app.get("/orf", async function (request, response) {
 
 app.get("/orf/detail", async function (req, response) {
   // "https://orf.at/stories/3380511/"
-  const url = "https://orf.at/stories/" + req.query.story + "/";
-  await scrapeWebsiteDetail(url)
+  await scrapeWebsiteDetail(req.query.story)
     .then((result) => {
       response.send(result);
     })
