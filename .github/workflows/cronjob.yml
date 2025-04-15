@@ -1,9 +1,7 @@
-name: Run-Daily
-
+name: Trigger Action on a CRON Schedule
 on:
   schedule:
-    - cron: "55,5 9 * * *"
-  workflow_dispatch: # Enable manual trigger from GitHub UI
+    - cron: "52 * * * *" # Runs every hour at minute 55
 
 jobs:
   call-endpoint:
