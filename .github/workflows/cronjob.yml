@@ -1,11 +1,28 @@
-name: Trigger Action on a CRON Schedule
+name: Test Github Actions
+
 on:
   schedule:
-    - cron: "52 * * * *" # Runs every hour at minute 55
+    - cron: "0 3 * * *"
+  workflow_dispatch: # Enable manual trigger from GitHub UI
 
 jobs:
-  call-endpoint:
+  # call-endpoint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Trigger API endpoint
+  #       run: curl -X GET https://vercel-express-test-ochre.vercel.app/orf
+
+  Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger API endpoint
-        run: curl -X GET https://vercel-express-test-ochre.vercel.app/orf
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+      - run: echo "🍏 This job's status is ${{ job.status }}."
