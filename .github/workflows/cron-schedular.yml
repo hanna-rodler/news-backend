@@ -1,0 +1,14 @@
+name: Run-Test
+
+on:
+  schedule:
+    - cron: '15 9 * * *'
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Run Script
+      run: |
+        chmod +x script.sh
+        ./script.sh
