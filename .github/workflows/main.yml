@@ -1,0 +1,11 @@
+name: testCall
+on:
+  schedule:
+    - cron: "55 * * * *"  # Runs every hour at minute 0
+  workflow_dispatch:     # Allows manual triggering
+jobs:
+  call-endpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger API endpoint
+        run: curl -X GET https://vercel-express-test-ochre.vercel.app/orf
