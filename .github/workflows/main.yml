@@ -2,7 +2,7 @@ name: Run-Daily
 
 on:
   schedule:
-    - cron: "55,5 9 * * *"
+    - cron: "5 * * * *"
   workflow_dispatch: # Enable manual trigger from GitHub UI
 
 jobs:
