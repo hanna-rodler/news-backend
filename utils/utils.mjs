@@ -76,3 +76,27 @@ export function saveToFile(content, folder, fileName) {
   fs.writeFileSync(filePath, content, "utf8");
   console.log(`File written: ${filePath}`);
 }
+
+export function convertToTimestamp(dateString) {
+  // Split the date and time parts
+  const [datePart, timePart] = dateString.split(" ");
+  const [day, month, year] = datePart.split(".").map(Number);
+  const [hour, minute] = timePart.split(".").map(Number);
+
+  // Month in JavaScript Date object is 0-indexed
+  const jsMonth = month - 1;
+
+  console.log("Parsed date:", {
+    day,
+    month: jsMonth,
+    year,
+    hour,
+    minute,
+  });
+
+  // Create a new JavaScript Date object (which MongoDB uses)
+  const date = new Date(year, jsMonth, day, hour, minute, 0, 0);
+  console.log("Converted date:", date);
+
+  return date;
+}

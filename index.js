@@ -1,5 +1,5 @@
 import express from "express";
-
+import articleRoutes from "./routes/articles.mjs";
 import {
   getPrompt7b,
   getPrompt9c,
@@ -17,29 +17,14 @@ import {
   isPromptNameValid,
 } from "./utils/mistral.mjs";
 
-var app = express();
-app.get("/orf", async function (request, response) {
-  await scrapeOrfHome("https://orf.at/")
-    .then((result) => {
-      response.send(result);
-    })
-    .catch((error) => {
-      console.log("error", error);
-      response.send(error);
-    });
-});
+const PORT = 3000;
 
-app.get("/orf/detail", async function (req, response) {
-  // "https://orf.at/stories/3380511/"
-  const url = "https://orf.at/stories/" + req.query.story + "/";
-  await scrapeWebsiteDetail(url)
-    .then((result) => {
-      response.send(result);
-    })
-    .catch((error) => {
-      console.log("error", error);
-      response.send(error);
-    });
+var app = express();
+
+app.use("/api", articleRoutes);
+
+app.get("/status", (req, res) => {
+  res.send("✅ Server is running");
 });
 
 app.get("/mistral/prompt9c", async function (req, res) {
@@ -118,6 +103,6 @@ app.get("/mistral", async function (req, res) {
   }
 });
 
-app.listen(4200, function () {
-  console.log("Started application on port %d", 4200);
+app.listen(PORT, function () {
+  console.log("🚀 Started application on port %d", PORT);
 });
