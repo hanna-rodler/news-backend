@@ -1,6 +1,7 @@
 # Backend: News Crawler & Processor
 
-- `features/webScraper.mjs` scrapes political news articles
+- `/api/crawl/overview` scrapes political news articles overview
+- `/api/crawl/details` scrapes article details and saves them to DB
 - `features/mistral.mjs` handles prompt rewriting
 
 TODOs:
