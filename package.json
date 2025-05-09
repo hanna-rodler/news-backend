@@ -23,6 +23,7 @@
     "fs": "^0.0.1-security",
     "joi": "^17.13.3",
     "mongodb": "^6.15.0",
+    "mongoose": "^8.14.2",
     "path": "^0.12.7",
     "puppeteer-core": "^24.7.2",
     "url": "^0.11.4"
