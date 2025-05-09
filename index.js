@@ -1,12 +1,12 @@
 import express from "express";
-import articleRoutes from "./routes/articles.mjs";
+import crawlerRoutes from "./routes/crawler.routes.mjs";
 import {
   getPrompt7b,
   getPrompt9c,
   getSofterPromptResponse,
   getVerySoftPromptResponse,
 } from "./features/mistral.mjs";
-import { scrapeWebsiteDetail, scrapeOrfHome } from "./features/webScraper.mjs";
+import { connectToDB } from "./config/db.mjs";
 // import { title, article, lead } from './articles/Trump-Grenell.js';
 // import { title, article, lead } from './articles/israel-klinikdirektor.js';
 import { article } from "./articles/femizid.js";
@@ -17,11 +17,9 @@ import {
   isPromptNameValid,
 } from "./utils/mistral.mjs";
 
-const PORT = 3000;
-
 var app = express();
 
-app.use("/api", articleRoutes);
+app.use("/api/crawl", crawlerRoutes);
 
 app.get("/status", (req, res) => {
   res.send("✅ Server is running");
@@ -103,6 +101,11 @@ app.get("/mistral", async function (req, res) {
   }
 });
 
-app.listen(PORT, function () {
-  console.log("🚀 Started application on port %d", PORT);
-});
+const startServer = async () => {
+  await connectToDB(process.env.MONGO_URI);
+  app.listen(process.env.PORT, () =>
+    console.log(`🚀 Server running on http://localhost:${process.env.PORT}`)
+  );
+};
+
+startServer();
