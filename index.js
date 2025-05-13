@@ -1,5 +1,6 @@
 import express from "express";
 import crawlerRoutes from "./routes/crawler.routes.mjs";
+import rewriterRoutes from "./routes/rewriterRoutes.mjs";
 import {
   getPrompt7b,
   getPrompt9c,
@@ -20,6 +21,8 @@ import {
 var app = express();
 
 app.use("/api/crawl", crawlerRoutes);
+
+app.use("/api/rewrite", rewriterRoutes);
 
 app.get("/status", (req, res) => {
   res.send("✅ Server is running");
