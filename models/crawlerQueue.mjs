@@ -17,7 +17,6 @@ const crawlerQueueSchema = new mongoose.Schema({
     verySoftShort: { type: Boolean, default: false },
     verySoftShortest: { type: Boolean, default: false },
   },
-  isSofterValid: { type: Boolean, default: false },
 });
 
 export const CrawlerQueue = crawlerDB.model("queue", crawlerQueueSchema);

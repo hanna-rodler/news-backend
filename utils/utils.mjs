@@ -92,16 +92,19 @@ export function convertToTimestamp(dateString) {
   return date;
 }
 
+// Adds target="_blank" to all <a> tags in the input HTML string
 export function addTargetBlank(text) {
-  const div = document.createElement("div");
-  div.innerHTML = text;
-
-  const links = div.querySelectorAll("a");
-  links.forEach((link) => {
-    link.setAttribute("target", "_blank");
+  return text.replace(/<a\b([^>]*)>/gi, (match, attrs) => {
+    // If target already exists, replace it; otherwise, add it
+    if (/target\s*=\s*(['"])[^'"]*\1/i.test(attrs)) {
+      return `<a${attrs.replace(
+        /target\s*=\s*(['"])[^'"]*\1/i,
+        'target="_blank"'
+      )}>`;
+    } else {
+      return `<a${attrs} target="_blank">`;
+    }
   });
-
-  return div.innerHTML;
 }
 
 export function checkVersionName(version) {

@@ -138,6 +138,7 @@ export const crawlDetails = async (req, res) => {
 
     const browser = await puppeteer.launch(launchOptions);
     for (const articleOverviewItem of articleOverview) {
+      console.log("crawling article details for ", articleOverviewItem.id);
       const existingArticle = await CrawledArticle.findOne({
         _id: `${articleOverviewItem.id}-original`,
       });
@@ -205,8 +206,9 @@ export const crawlDetails = async (req, res) => {
               "div.story-footer div.byline p",
               (el) => el.innerHTML.trim()
             );
+            console.log("Footer found:", footer);
             const cleanedFotter = addTargetBlank(footer);
-
+            console.log("Footer cleaned:", cleanedFotter);
             article.footer = cleanedFotter;
           } catch (error) {
             console.warn("Footer not found:", error.message);
@@ -223,9 +225,6 @@ export const crawlDetails = async (req, res) => {
           try {
             crawledArticle.save();
             console.log("Article saved to the database ", crawledArticle);
-            // remove article with the same id from the queue
-            // await CrawlerQueue.deleteOne({ _id: article._id });
-            // console.log("Article removed from the queue ", article.id);
           } catch (error) {
             console.error(
               "Error saving article to the database:",
@@ -237,6 +236,11 @@ export const crawlDetails = async (req, res) => {
         } catch (error) {
           console.error("Could not find the div.story-story:", error);
         }
+      } else {
+        console.log(
+          "Article already exists in the database ",
+          existingArticle._id
+        );
       }
     }
     return {
