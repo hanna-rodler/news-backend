@@ -94,3 +94,12 @@ export function getSummarizationPrompt(article, isVeryShort = false) {
 
   return finalPrompt;
 }
+
+export function checkValidity(article) {
+  return (
+    article !== null &&
+    article.title.length > 3 &&
+    article.content.length > 10 &&
+    article.id !== undefined
+  );
+}

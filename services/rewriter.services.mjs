@@ -1,25 +1,32 @@
 import { Mistral } from "@mistralai/mistralai";
+import { CrawlerQueue } from "../models/crawlerQueue.mjs";
 import dotenv from "dotenv";
-
 import { CrawledArticle } from "../models/crawledArticles.mjs";
-import { getPrompt, getSummarizationPrompt } from "../utils/rewrite.mjs";
+import {
+  getPrompt,
+  getSummarizationPrompt,
+  checkValidity,
+} from "../utils/rewrite.mjs";
 import { RewrittenArticle } from "../models/rewrittenArticle.mjs";
 import { checkVersionName } from "../utils/utils.mjs";
 dotenv.config();
 const apiKey = process.env.MISTRAL_API_KEY;
 
-export const rewriteSofter = async () => {
+export const rewriteSofter = async (articleId, version = "softer") => {
   try {
     const article = await CrawledArticle.findOne({
       _id: articleId + "-original",
     });
-    console.log("rewriting article", article.title, " with version soft");
+    console.log("rewriting article", article.title, " with version " + version);
 
-    const userPrompt = getPrompt("softer", article);
+    const userPrompt = getPrompt(version, article);
 
     let rewrittenArticle = await rewriteArticle(userPrompt);
 
-    const savedArticle = saveArticle(article, rewrittenArticle);
+    const savedArticle = saveArticle(article, rewrittenArticle, version);
+    if (checkValidity(savedArticle)) {
+      await updateVersionValidities(articleId, version, true);
+    }
 
     return savedArticle;
   } catch (error) {
@@ -32,6 +39,7 @@ export const rewriteSofter = async () => {
   }
 };
 
+// TODO: refactor to one.
 export const rewriteVerySoft = async (articleId, version = "verySoft") => {
   try {
     const existingArticle = await RewrittenArticle.findOne({
@@ -51,6 +59,9 @@ export const rewriteVerySoft = async (articleId, version = "verySoft") => {
       let rewrittenArticle = await rewriteArticle(userPrompt);
 
       const savedArticle = saveArticle(article, rewrittenArticle, version);
+      if (checkValidity(savedArticle)) {
+        await updateVersionValidities(articleId, version, true);
+      }
 
       return savedArticle;
     } else {
@@ -96,6 +107,9 @@ export const summarize = async (articleId, version, article = null) => {
       let summarizedArticle = await rewriteArticle(summarizationPrompt);
 
       const savedArticle = saveArticle(article, summarizedArticle, version);
+      if (checkValidity(savedArticle)) {
+        await updateVersionValidities(articleId, version, true);
+      }
 
       return savedArticle;
     } else {
@@ -175,4 +189,16 @@ function saveArticle(originalArticle, rewrittenArticle, version) {
     console.error("Error saving article:", error);
     return false;
   }
+}
+
+async function updateVersionValidities(articleId, version, isValid) {
+  const validityUpdate = {};
+  validityUpdate["versions." + version] = isValid;
+  console.log("Validity update:", validityUpdate, " for articleId:", articleId);
+  await CrawlerQueue.updateOne(
+    { id: articleId },
+    {
+      $set: validityUpdate,
+    }
+  );
 }
