@@ -39,7 +39,7 @@ function getFormatInstructionWithArticle(article) {
       title: article.title,
       content: article.content,
     };
-    console.log("articleWithoutLead", articleWithLead);
+    console.log("articleWithoutLead", articleWithoutLead);
 
     return (
       input_format_without_lead +
@@ -91,7 +91,6 @@ export function getSummarizationPrompt(article, isVeryShort = false) {
 
   const finalPrompt =
     summarizationPrompt + getFormatInstructionWithArticle(article);
-  console.log("finalPrompt", finalPrompt);
 
   return finalPrompt;
 }

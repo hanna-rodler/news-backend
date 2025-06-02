@@ -10,8 +10,22 @@ import {
 export const verySoftRewriterController = async (req, res) => {
   try {
     const article = await rewriteVerySoft(req.params.id);
-    if (article.title.length > 5 && article.content.length > 10) {
-      res.status(200).json({ article });
+    const summarizedShort = await summarize(
+      req.params.id,
+      "verySoftShort",
+      article
+    );
+    const summarizedShortest = await summarize(
+      req.params.id,
+      "verySoftShortest",
+      article
+    );
+    if (
+      checkValidity(article) &&
+      checkValidity(summarizedShort) &&
+      checkValidity(summarizedShortest)
+    ) {
+      res.status(200).json({ article, summarizedShort, summarizedShortest });
     } else {
       res.status(404).json({ message: "No articles found" });
     }
@@ -92,25 +106,33 @@ export const rewriteVerySoftArticlesController = async (req, res) => {
     const articleIds = await CrawlerQueue.find().limit(50);
     const successfullyRewritten = [];
     for (const articleId of articleIds) {
-      const valid = {
-        verySoft: false,
-        verySoftShort: false,
-        verySoftShortest: false,
-      };
       const verySoftArticle = await rewriteVerySoft(articleId.id);
-      valid.verySoft = checkValidity(verySoftArticle);
-      // TODO: rewrite shorter
-      valid.verySoftShort = true; // Placeholder for actual implementation. use verySoftArticle
-      valid.verySoftShortest = true; // Placeholder for actual implementation
-      if (valid.verySoft && valid.verySoftShort && valid.verySoftShortest) {
-        successfullyRewritten.push(articleId.id);
-        await CrawlerQueue.deleteOne({ _id: articleId._id });
-        console.log(
-          "Successfully rewrote article",
-          articleId.title,
-          "with id",
-          articleId.id
+
+      if (checkValidity(verySoftArticle)) {
+        const summarizedShort = await summarize(
+          articleId,
+          "verySoftShort",
+          verySoftArticle
         );
+
+        const summarizedShortest = await summarize(
+          articleId,
+          "verySoftShortest",
+          verySoftArticle
+        );
+        if (
+          checkValidity(summarizedShort) &&
+          checkValidity(summarizedShortest)
+        ) {
+          successfullyRewritten.push(articleId.id);
+          await CrawlerQueue.deleteOne({ _id: articleId._id });
+          console.log(
+            "Successfully rewrote article",
+            articleId.title,
+            "with id",
+            articleId.id
+          );
+        }
       }
     }
     res.status(200).json({
@@ -130,25 +152,32 @@ export const rewriteSofterArticlesController = async (req, res) => {
     const articleIds = await CrawlerQueue.find().limit(50);
     const successfullyRewritten = [];
     for (const articleId of articleIds) {
-      const valid = {
-        softer: false,
-        softerShort: false,
-        softerShortest: false,
-      };
       const softerArticle = await rewriteSofter(articleId.id);
-      valid.softer = checkValidity(softerArticle);
-      // TODO: shorter, very short
-      valid.softerShort = true; // Placeholder for actual implementation
-      valid.softerShortest = true; // Placeholder for actual implementation
-      if (valid.softerShort && valid.softerShortest && valid.softer) {
-        successfullyRewritten.push(articleId.id);
-        await CrawlerQueue.deleteOne({ _id: articleId._id });
-        console.log(
-          "Successfully rewrote article",
-          articleId.title,
-          "with id",
-          articleId.id
+      if (checkValidity(softerArticle)) {
+        const summarizedShort = await summarize(
+          articleId,
+          "softerShort",
+          softerArticle
         );
+
+        const summarizedShortest = await summarize(
+          articleId,
+          "softerShortest",
+          softerArticle
+        );
+        if (
+          checkValidity(summarizedShort) &&
+          checkValidity(summarizedShortest)
+        ) {
+          successfullyRewritten.push(articleId.id);
+          await CrawlerQueue.deleteOne({ _id: articleId._id });
+          console.log(
+            "Successfully rewrote article",
+            articleId.title,
+            "with id",
+            articleId.id
+          );
+        }
       }
     }
     // delete all articles from queue that were successfully rewritten

@@ -91,3 +91,30 @@ export function convertToTimestamp(dateString) {
 
   return date;
 }
+
+export function addTargetBlank(text) {
+  const div = document.createElement("div");
+  div.innerHTML = text;
+
+  const links = div.querySelectorAll("a");
+  links.forEach((link) => {
+    link.setAttribute("target", "_blank");
+  });
+
+  return div.innerHTML;
+}
+
+export function checkVersionName(version) {
+  const validVersions = [
+    "softer",
+    "softerShort",
+    "softerShortest",
+    "verySoft",
+    "verySoftShort",
+    "verySoftShortest",
+    "original",
+    "originalShort",
+    "originalShortest",
+  ];
+  return validVersions.includes(version);
+}

@@ -1,5 +1,9 @@
 let puppeteer, chromium;
-import { cleanContent, convertToTimestamp } from "../utils/utils.mjs";
+import {
+  cleanContent,
+  convertToTimestamp,
+  addTargetBlank,
+} from "../utils/utils.mjs";
 import dotenv from "dotenv";
 import { CrawlerQueue } from "../models/crawlerQueue.mjs";
 import { CrawledArticle } from "../models/crawledArticles.mjs";
@@ -197,10 +201,13 @@ export const crawlDetails = async (req, res) => {
 
           // Footer
           try {
-            article.footer = await page.$eval(
+            const footer = await page.$eval(
               "div.story-footer div.byline p",
               (el) => el.innerHTML.trim()
             );
+            const cleanedFotter = addTargetBlank(footer);
+
+            article.footer = cleanedFotter;
           } catch (error) {
             console.warn("Footer not found:", error.message);
           }

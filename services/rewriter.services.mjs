@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { CrawledArticle } from "../models/crawledArticles.mjs";
 import { getPrompt, getSummarizationPrompt } from "../utils/rewrite.mjs";
 import { RewrittenArticle } from "../models/rewrittenArticle.mjs";
+import { checkVersionName } from "../utils/utils.mjs";
 dotenv.config();
 const apiKey = process.env.MISTRAL_API_KEY;
 
@@ -31,20 +32,34 @@ export const rewriteSofter = async () => {
   }
 };
 
-export const rewriteVerySoft = async (articleId) => {
+export const rewriteVerySoft = async (articleId, version = "verySoft") => {
   try {
-    const article = await CrawledArticle.findOne({
-      _id: articleId + "-original",
+    const existingArticle = await RewrittenArticle.findOne({
+      _id: articleId + "-" + version,
     });
-    console.log("rewriting article", article.title, " with version very soft");
+    if (!existingArticle) {
+      const article = await CrawledArticle.findOne({
+        _id: articleId + "-original",
+      });
+      console.log(
+        "rewriting article",
+        article.title,
+        " with version " + version
+      );
 
-    const userPrompt = getPrompt("verySoft", article);
+      const userPrompt = getPrompt(version, article);
+      let rewrittenArticle = await rewriteArticle(userPrompt);
 
-    let rewrittenArticle = await rewriteArticle(userPrompt);
+      const savedArticle = saveArticle(article, rewrittenArticle, version);
 
-    const savedArticle = saveArticle(article, rewrittenArticle);
-
-    return savedArticle;
+      return savedArticle;
+    } else {
+      console.log(
+        `Article with version ${version} already exists in the database`,
+        existingArticle
+      );
+      return existingArticle;
+    }
   } catch (error) {
     console.error("Error during rewriting:", error);
     return {
@@ -55,17 +70,22 @@ export const rewriteVerySoft = async (articleId) => {
   }
 };
 
-export const summarize = async (articleId, version) => {
+export const summarize = async (articleId, version, article = null) => {
   try {
-    const article = await CrawledArticle.findOne({
-      _id: articleId + "-original",
-    });
-
-    console.log("summarizing article", article.title);
-    const existingArticle = RewrittenArticle.findOne({
+    if (checkVersionName(version) === false) {
+      throw new Error("Invalid version provided for summarization");
+    }
+    const existingArticle = await RewrittenArticle.findOne({
       _id: articleId + "-" + version,
     });
     if (!existingArticle) {
+      if (!article) {
+        article = await CrawledArticle.findOne({
+          _id: articleId + "-original",
+        });
+      }
+      console.log("summarizing article", article.title, version);
+
       const isVeryShort = version.toLowerCase().includes("shortest")
         ? true
         : false;
@@ -140,7 +160,7 @@ function saveArticle(originalArticle, rewrittenArticle, version) {
   try {
     const article = new RewrittenArticle({
       ...rewrittenArticle,
-      version,
+      version: version,
       href: originalArticle.href,
       figures: originalArticle.figures,
       date: originalArticle.date,
