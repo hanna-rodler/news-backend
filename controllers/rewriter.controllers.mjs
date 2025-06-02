@@ -1,52 +1,41 @@
 import { CrawlerQueue } from "../models/crawlerQueue.mjs";
 import { checkVersionName } from "../utils/utils.mjs";
-import {
-  rewriteVerySoft,
-  rewriteSofter,
-  summarize,
-} from "../services/rewriter.services.mjs";
+import { rewriteSoftened, summarize } from "../services/rewriter.services.mjs";
 import { checkValidity } from "../utils/rewrite.mjs";
+import { CrawledArticle } from "../models/crawledArticles.mjs";
 
 // TODO: make route just for one article in case one got missed.
 
-export const rewriteSingleController = async (req, res) => {
+export const rewriteOneArticleController = async (req, res) => {
   try {
     const articleId = req.params.id;
     const version = req.params.version;
     if (checkVersionName(version)) {
       try {
-        console.log("article:", articleId, " version:", version);
-        let softenedArticle = null;
-        if (version === "verySoft") {
-          softenedArticle = await rewriteVerySoft(articleId);
+        const result = await rewriteArticle(articleId, version);
+        const {
+          isFullyRewritten,
+          softenedArticle,
+          summarizedShort,
+          summarizedShortest,
+        } = result;
+        if (
+          isFullyRewritten &&
+          checkValidity(softenedArticle) &&
+          checkValidity(summarizedShort) &&
+          checkValidity(summarizedShortest)
+        ) {
+          return res
+            .status(200)
+            .json({ softenedArticle, summarizedShort, summarizedShortest });
         } else {
-          softenedArticle = await rewriteSofter(articleId);
-        }
-        if (checkValidity(softenedArticle)) {
-          const summarizedShort = await summarize(
-            articleId,
-            version + "Short",
-            softenedArticle
-          );
-          const summarizedShortest = await summarize(
-            articleId,
-            version + "Shortest",
-            softenedArticle
-          );
-          if (
-            checkValidity(summarizedShort) &&
-            checkValidity(summarizedShortest)
-          ) {
-            return res
-              .status(200)
-              .json({ softenedArticle, summarizedShort, summarizedShortest });
-          } else {
-            return res
-              .status(404)
-              .json({ message: "No valid summaries found" });
-          }
-        } else {
-          return res.status(404).json({ message: "No valid article found" });
+          return res.status(404).json({
+            message: "Rewriting error has occured",
+            isFullyRewritten,
+            softenedArticle,
+            summarizedShort,
+            summarizedShortest,
+          });
         }
       } catch (error) {
         return res.status(500).json({
@@ -57,66 +46,8 @@ export const rewriteSingleController = async (req, res) => {
     } else {
       return res.status(400).json({
         message: "Invalid version name",
-        validVersions: [
-          "softer",
-          "softerShort",
-          "softerShortest",
-          "verySoft",
-          "verySoftShort",
-          "verySoftShortest",
-          "original",
-          "originalShort",
-          "originalShortest",
-        ],
+        validVersions: ["softer", "verySoft"],
       });
-    }
-  } catch (error) {
-    return {
-      message: "Overview crawl failed",
-      error: error.message,
-    };
-  }
-};
-
-export const verySoftRewriterController = async (req, res) => {
-  try {
-    const articleId = req.params.id;
-    const article = await rewriteVerySoft(articleId);
-    const summarizedShort = await summarize(
-      articleId,
-      "verySoftShort",
-      article
-    );
-    const summarizedShortest = await summarize(
-      articleId,
-      "verySoftShortest",
-      article
-    );
-    if (
-      checkValidity(article) &&
-      checkValidity(summarizedShort) &&
-      checkValidity(summarizedShortest)
-    ) {
-      res.status(200).json({ article, summarizedShort, summarizedShortest });
-    } else {
-      res.status(404).json({ message: "No articles found" });
-    }
-  } catch (error) {
-    return {
-      message: "Overview crawl failed",
-      error: error.message,
-    };
-  }
-};
-
-export const softerRewriterController = async (req, res) => {
-  try {
-    const articleId = req.params.id;
-    const article = await rewriteSofter(articleId);
-    if (article.title.length > 5 && article.content.length > 10) {
-      res.status(200).json({ article });
-    } else {
-      res.status(404).json({ message: "No articles found" });
     }
   } catch (error) {
     return {
@@ -128,37 +59,23 @@ export const softerRewriterController = async (req, res) => {
 
 export const summarizeOriginalArticlesController = async (req, res) => {
   try {
-    const articleIds = await CrawlerQueue.find().limit(50);
+    const articles = await CrawlerQueue.find().limit(50);
     const successfullyRewritten = [];
-    for (const articleId of articleIds) {
-      const valid = {
-        originalShort: false,
-        originalShortest: false,
-      };
-      console.log(
-        "Rewriting article",
-        articleId.title,
-        "with id",
-        articleId.id
-      );
+    for (const article of articles) {
+      console.log("Summarizing article", article.title, "with id", article.id);
 
       // short
-      const originalShort = await summarize(articleId.id, "originalShort");
-      valid.originalShort = checkValidity(originalShort);
+      const originalShort = await summarize(article.id, "originalShort");
 
       // shortest
-      const originalShortest = await summarize(
-        articleId.id,
-        "originalShortest"
-      );
-      valid.originalShortest = checkValidity(originalShortest);
-      if (valid.originalShort || valid.originalShortest) {
-        successfullyRewritten.push(articleId.id);
+      const originalShortest = await summarize(article.id, "originalShortest");
+      if (checkValidity(originalShort) || checkValidity(originalShortest)) {
+        successfullyRewritten.push(article.id);
         console.log(
-          "Successfully rewrote article",
-          articleId.title,
+          "Successfully summarized article",
+          article.title,
           "with id",
-          articleId.id
+          article.id
         );
       }
     }
@@ -174,39 +91,72 @@ export const summarizeOriginalArticlesController = async (req, res) => {
   }
 };
 
-export const rewriteController = async (req, res) => {
+export const summarizeOneOriginalArticleController = async (req, res) => {
+  try {
+    console.log("Summarizing one original article");
+    const articleId = req.params.id;
+    const article = await CrawledArticle.findOne({
+      _id: articleId + "-original",
+    });
+    console.log("article", article);
+    if (article) {
+      console.log("Summarizing article", article.title, "with id", article.id);
+      // short
+      const originalShort = await summarize(article.id, "originalShort");
+
+      // shortest
+      const originalShortest = await summarize(article.id, "originalShortest");
+      if (checkValidity(originalShort) || checkValidity(originalShortest)) {
+        res.status(200).json({
+          message: "Summarized articles",
+        });
+      } else {
+        res.status(404).json({
+          message: "Couldn't generate valid summaries for the article",
+          article: articleId,
+        });
+      }
+    } else {
+      res.status(404).json({
+        message: "Article not found",
+        article: articleId,
+      });
+    }
+  } catch (error) {
+    return {
+      message: "Rewrite failed",
+      error: error.message,
+    };
+  }
+};
+
+export const rewriteMultipleArticlesController = async (req, res) => {
   try {
     const version = req.params.version;
     if (checkVersionName(version)) {
       try {
-        const articleIds = await CrawlerQueue.find().limit(50);
+        const articles = await CrawlerQueue.find().limit(50);
         const successfullyRewritten = [];
-        for (const articleId of articleIds) {
-          let softenedArticle = null;
-          if (version === "verySoft") {
-            softenedArticle = await rewriteVerySoft(articleId.id);
-          } else if (version === "softer") {
-            softenedArticle = await rewriteSofter(articleId.id);
-          }
-          if (checkValidity(verySoftArticle)) {
-            const summarizedShort = await summarize(
-              articleId,
-              version + "Short",
-              softenedArticle
-            );
+        for (const article of articles) {
+          const result = await rewriteArticle(article.id, version);
+          const {
+            isFullyRewritten,
+            softenedArticle,
+            summarizedShort,
+            summarizedShortest,
+          } = result;
 
-            const summarizedShortest = await summarize(
-              articleId,
-              version + "Shortest",
-              softenedArticle
+          if (
+            isFullyRewritten &&
+            checkValidity(softenedArticle) &&
+            checkValidity(summarizedShort) &&
+            checkValidity(summarizedShortest)
+          ) {
+            successfullyRewritten.push(article.id);
+          } else {
+            console.log(
+              `Article ${article.id} could not be fully rewritten with version ${version}`
             );
-
-            if (
-              checkValidity(summarizedShort) &&
-              checkValidity(summarizedShortest)
-            ) {
-              successfullyRewritten.push(articleId.id);
-            }
           }
         }
         res.status(200).json({
@@ -222,17 +172,7 @@ export const rewriteController = async (req, res) => {
     } else {
       return res.status(400).json({
         message: "Invalid version name",
-        validVersions: [
-          "softer",
-          "softerShort",
-          "softerShortest",
-          "verySoft",
-          "verySoftShort",
-          "verySoftShortest",
-          "original",
-          "originalShort",
-          "originalShortest",
-        ],
+        validVersions: ["softer", "verySoft"],
       });
     }
   } catch (error) {
@@ -243,103 +183,78 @@ export const rewriteController = async (req, res) => {
   }
 };
 
-export const rewriteVerySoftArticlesController = async (req, res) => {
+async function rewriteArticle(articleId, version) {
   try {
-    const articleIds = await CrawlerQueue.find().limit(50);
-    const successfullyRewritten = [];
-    for (const articleId of articleIds) {
-      const verySoftArticle = await rewriteVerySoft(articleId.id);
-
-      if (checkValidity(verySoftArticle)) {
-        const summarizedShort = await summarize(
-          articleId,
-          "verySoftShort",
-          verySoftArticle
-        );
-
-        const summarizedShortest = await summarize(
-          articleId,
-          "verySoftShortest",
-          verySoftArticle
-        );
-        if (
-          checkValidity(summarizedShort) &&
-          checkValidity(summarizedShortest)
-        ) {
-          successfullyRewritten.push(articleId.id);
-          console.log(
-            "Successfully rewrote article",
-            articleId.title,
-            "with id",
-            articleId.id
-          );
-        }
-      }
+    console.log("article:", articleId, " version:", version);
+    let softenedArticle = await rewriteSoftened(articleId, version);
+    if (checkValidity(softenedArticle)) {
+      const summarizedShort = await summarize(
+        articleId,
+        version + "Short",
+        softenedArticle
+      );
+      const summarizedShortest = await summarize(
+        articleId,
+        version + "Shortest",
+        softenedArticle
+      );
+      return {
+        softenedArticle,
+        summarizedShort,
+        summarizedShortest,
+        isFullyRewritten: true,
+      };
+    } else {
+      return { message: "No valid article found", isFullyRewritten: false };
     }
-    res.status(200).json({
-      message: "Rewrote articles",
-      articles: successfullyRewritten,
-    });
   } catch (error) {
-    return {
-      message: "Rewrite failed",
+    return res.status(500).json({
+      message: `Rewrite for version ${version} failed`,
       error: error.message,
-    };
+    });
   }
-};
+}
 
-export const rewriteSofterArticlesController = async (req, res) => {
+export const cleanupQueueController = async (req, res) => {
   try {
-    const articleIds = await CrawlerQueue.find().limit(50);
-    const successfullyRewritten = [];
-    for (const articleId of articleIds) {
-      const softerArticle = await rewriteSofter(articleId.id);
-      if (checkValidity(softerArticle)) {
-        const summarizedShort = await summarize(
-          articleId,
-          "softerShort",
-          softerArticle
-        );
+    const articles = await CrawlerQueue.find().limit();
+    const InvalidArticles = [];
+    for (const article of articles) {
+      const articleId = article._id;
+      const versions = article.versions;
+      console.log("Cleaning up article with id:", articleId, versions);
+      // check if all versions are valid
+      const allVersionsValid =
+        versions.originalShort &&
+        versions.originalShortest &&
+        versions.softer &&
+        versions.softerShort &&
+        versions.softerShortest &&
+        versions.verySoft &&
+        versions.verySoftShort &&
+        versions.verySoftShortest;
 
-        const summarizedShortest = await summarize(
+      // Delete the article from the queue
+      if (allVersionsValid) {
+        await CrawlerQueue.deleteOne({ _id: articleId });
+        console.log("Deleted article with id:", articleId);
+      } else {
+        InvalidArticles.push(articleId);
+        console.log(
+          "Article with id:",
           articleId,
-          "softerShortest",
-          softerArticle
+          "is not fully rewritten, skipping deletion."
         );
-        if (
-          checkValidity(summarizedShort) &&
-          checkValidity(summarizedShortest)
-        ) {
-          successfullyRewritten.push(articleId.id);
-          // update CrawlerQueue with the validities
-          await CrawlerQueue.updateOne(
-            { _id: articleId._id },
-            {
-              $set: {
-                "versions.softer": true,
-                "versions.softerShort": summarizedShort,
-                "versions.softerShortest": summarizedShortest,
-              },
-            }
-          );
-          console.log(
-            "Successfully rewrote article",
-            articleId.title,
-            "with id",
-            articleId.id
-          );
-        }
       }
     }
-    // delete all articles from queue that were successfully rewritten
-    res.status(200).json({
-      message: "Rewrote articles",
-      articles: successfullyRewritten,
+    res.status(200).send({
+      message: "Cleanup completed",
+      invalidArticles: InvalidArticles,
     });
   } catch (error) {
-    return {
-      message: "Rewrite failed",
+    return res.status(500).json({
+      message: "Error during cleanup",
       error: error.message,
-    };
+    });
   }
 };

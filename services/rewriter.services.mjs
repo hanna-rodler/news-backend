@@ -12,35 +12,7 @@ import { checkVersionName } from "../utils/utils.mjs";
 dotenv.config();
 const apiKey = process.env.MISTRAL_API_KEY;
 
-export const rewriteSofter = async (articleId, version = "softer") => {
-  try {
-    const article = await CrawledArticle.findOne({
-      _id: articleId + "-original",
-    });
-    console.log("rewriting article", article.title, " with version " + version);
-
-    const userPrompt = getPrompt(version, article);
-
-    let rewrittenArticle = await rewriteArticle(userPrompt);
-
-    const savedArticle = saveArticle(article, rewrittenArticle, version);
-    if (checkValidity(savedArticle)) {
-      await updateVersionValidities(articleId, version, true);
-    }
-
-    return savedArticle;
-  } catch (error) {
-    console.error("Error during rewriting:", error);
-    return {
-      success: false,
-      message: "Failed to rewrite very soft article",
-      error: error.message,
-    };
-  }
-};
-
-// TODO: refactor to one.
-export const rewriteVerySoft = async (articleId, version = "verySoft") => {
+export const rewriteSoftened = async (articleId, version) => {
   try {
     const existingArticle = await RewrittenArticle.findOne({
       _id: articleId + "-" + version,
