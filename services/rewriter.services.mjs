@@ -2,7 +2,7 @@ import { Mistral } from "@mistralai/mistralai";
 import dotenv from "dotenv";
 
 import { CrawledArticle } from "../models/crawledArticles.mjs";
-import { getPrompt } from "../utils/rewrite.mjs";
+import { getPrompt, getSummarizationPrompt } from "../utils/rewrite.mjs";
 import { RewrittenArticle } from "../models/rewrittenArticle.mjs";
 dotenv.config();
 const apiKey = process.env.MISTRAL_API_KEY;
@@ -55,6 +55,46 @@ export const rewriteVerySoft = async (articleId) => {
   }
 };
 
+export const summarize = async (articleId, version) => {
+  try {
+    const article = await CrawledArticle.findOne({
+      _id: articleId + "-original",
+    });
+
+    console.log("summarizing article", article.title);
+    const existingArticle = RewrittenArticle.findOne({
+      _id: articleId + "-" + version,
+    });
+    if (!existingArticle) {
+      const isVeryShort = version.toLowerCase().includes("shortest")
+        ? true
+        : false;
+
+      console.log("isVeryShort", isVeryShort);
+      const summarizationPrompt = getSummarizationPrompt(article, isVeryShort);
+
+      let summarizedArticle = await rewriteArticle(summarizationPrompt);
+
+      const savedArticle = saveArticle(article, summarizedArticle, version);
+
+      return savedArticle;
+    } else {
+      console.log(
+        "Article already exists in the database",
+        existingArticle.id + "-" + version
+      );
+      return existingArticle;
+    }
+  } catch (error) {
+    console.error("Error during rewriting:", error);
+    return {
+      success: false,
+      message: "Failed to rewrite very soft article",
+      error: error.message,
+    };
+  }
+};
+
 async function rewriteArticle(userPrompt) {
   try {
     const client = new Mistral({ apiKey: apiKey });
@@ -96,18 +136,18 @@ async function rewriteArticle(userPrompt) {
   }
 }
 
-function saveArticle(originalArticle, rewrittenArticle) {
+function saveArticle(originalArticle, rewrittenArticle, version) {
   try {
     const article = new RewrittenArticle({
       ...rewrittenArticle,
-      version: "verySoft",
+      version,
       href: originalArticle.href,
       figures: originalArticle.figures,
       date: originalArticle.date,
       category: originalArticle.category,
       footer: originalArticle.footer,
       id: originalArticle.id,
-      _id: originalArticle.id + "-verySoft",
+      _id: originalArticle.id + "-" + version,
     });
     article.save();
     return article;

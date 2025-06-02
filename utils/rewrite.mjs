@@ -9,13 +9,17 @@ const input_format_with_lead =
 const input_format_without_lead =
   'The article is provided in the json object article with the keys "title" and "content". ';
 
-const return_format =
-  "Return only the rewritten german article in a json_object. ";
+const return_format_lead = `Return only the rewritten german article in a json_object with the keys "title", "lead" and "content". `;
+const return_format = `Return only the rewritten german article in a json_object with the keys "title" and "content". `;
 
 const restriction_political_softer =
   " Ensure that the political or ideological descriptors are retained while still focusing on a softer approach.";
 
-const summarization_instruction = "TODO";
+const summarization_shorter =
+  "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 100 words.";
+
+const summarization_veryShort =
+  "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 60 words.";
 
 function getFormatInstructionWithArticle(article) {
   if (article.lead !== "" && article.lead !== null) {
@@ -26,7 +30,7 @@ function getFormatInstructionWithArticle(article) {
     };
     return (
       input_format_with_lead +
-      return_format +
+      return_format_lead +
       "Article = " +
       JSON.stringify(articleWithLead)
     );
@@ -76,6 +80,18 @@ export function getPrompt(promptType, article) {
     prompt +
     getFormatInstructionWithArticle(article) +
     restriction_political_softer;
+
+  return finalPrompt;
+}
+
+export function getSummarizationPrompt(article, isVeryShort = false) {
+  const summarizationPrompt = isVeryShort
+    ? summarization_veryShort
+    : summarization_shorter;
+
+  const finalPrompt =
+    summarizationPrompt + getFormatInstructionWithArticle(article);
+  console.log("finalPrompt", finalPrompt);
 
   return finalPrompt;
 }
