@@ -17,7 +17,5 @@ router.post("/:version/all", rewriteMultipleArticlesController);
 router.post("/:version/:id", rewriteOneArticleController);
 router.post("/original/all", summarizeOriginalArticlesController);
 router.post("/cleanup-queue", cleanupQueueController);
-// TODO: only delete if other versions (softer, verySoft) are also rewritten
-// await CrawlerQueue.deleteOne({ _id: articleId._id });
 
 export default router;

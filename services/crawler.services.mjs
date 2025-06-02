@@ -6,7 +6,7 @@ import {
 } from "../utils/utils.mjs";
 import dotenv from "dotenv";
 import { CrawlerQueue } from "../models/crawlerQueue.mjs";
-import { CrawledArticle } from "../models/crawledArticles.mjs";
+import { RewrittenArticle } from "../models/rewrittenArticle.mjs";
 if (process.env.APP_ENV === "prod") {
   console.log("Running in prod mode!");
   puppeteer = (await import("puppeteer-core")).default;
@@ -139,7 +139,7 @@ export const crawlDetails = async (req, res) => {
     const browser = await puppeteer.launch(launchOptions);
     for (const articleOverviewItem of articleOverview) {
       console.log("crawling article details for ", articleOverviewItem.id);
-      const existingArticle = await CrawledArticle.findOne({
+      const existingArticle = await RewrittenArticle.findOne({
         _id: `${articleOverviewItem.id}-original`,
       });
       if (!existingArticle) {
@@ -221,7 +221,7 @@ export const crawlDetails = async (req, res) => {
             }
           });
 
-          const crawledArticle = new CrawledArticle(article);
+          const crawledArticle = new RewrittenArticle(article);
           try {
             crawledArticle.save();
             console.log("Article saved to the database ", crawledArticle);
