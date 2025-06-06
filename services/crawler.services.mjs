@@ -1,8 +1,12 @@
 let puppeteer, chromium;
-import { cleanContent, convertToTimestamp } from "../utils/utils.mjs";
+import {
+  cleanContent,
+  convertToTimestamp,
+  addTargetBlank,
+} from "../utils/utils.mjs";
 import dotenv from "dotenv";
 import { CrawlerQueue } from "../models/crawlerQueue.mjs";
-import { CrawledArticle } from "../models/crawledArticles.mjs";
+import { RewrittenArticle } from "../models/rewrittenArticle.mjs";
 if (process.env.APP_ENV === "prod") {
   console.log("Running in prod mode!");
   puppeteer = (await import("puppeteer-core")).default;
@@ -134,7 +138,8 @@ export const crawlDetails = async (req, res) => {
 
     const browser = await puppeteer.launch(launchOptions);
     for (const articleOverviewItem of articleOverview) {
-      const existingArticle = await CrawledArticle.findOne({
+      console.log("crawling article details for ", articleOverviewItem.id);
+      const existingArticle = await RewrittenArticle.findOne({
         _id: `${articleOverviewItem.id}-original`,
       });
       if (!existingArticle) {
@@ -197,10 +202,14 @@ export const crawlDetails = async (req, res) => {
 
           // Footer
           try {
-            article.footer = await page.$eval(
+            const footer = await page.$eval(
               "div.story-footer div.byline p",
               (el) => el.innerHTML.trim()
             );
+            console.log("Footer found:", footer);
+            const cleanedFotter = addTargetBlank(footer);
+            console.log("Footer cleaned:", cleanedFotter);
+            article.footer = cleanedFotter;
           } catch (error) {
             console.warn("Footer not found:", error.message);
           }
@@ -212,13 +221,10 @@ export const crawlDetails = async (req, res) => {
             }
           });
 
-          const crawledArticle = new CrawledArticle(article);
+          const crawledArticle = new RewrittenArticle(article);
           try {
             crawledArticle.save();
             console.log("Article saved to the database ", crawledArticle);
-            // remove article with the same id from the queue
-            // await CrawlerQueue.deleteOne({ _id: article._id });
-            // console.log("Article removed from the queue ", article.id);
           } catch (error) {
             console.error(
               "Error saving article to the database:",
@@ -230,6 +236,11 @@ export const crawlDetails = async (req, res) => {
         } catch (error) {
           console.error("Could not find the div.story-story:", error);
         }
+      } else {
+        console.log(
+          "Article already exists in the database ",
+          existingArticle._id
+        );
       }
     }
     return {

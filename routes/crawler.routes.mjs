@@ -8,7 +8,7 @@ dotenv.config();
 
 const router = express.Router();
 
-router.get("/overview", crawlOverviewController);
-router.get("/details", crawlDetailsController);
+router.post("/overview", crawlOverviewController);
+router.post("/details", crawlDetailsController);
 
 export default router;

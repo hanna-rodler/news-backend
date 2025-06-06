@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
-const crawlerDB = mongoose.connection.useDb("crawler");
+const crawlerDB = mongoose.connection.useDb("news-battery");
 
-const crawledArticleSchema = new mongoose.Schema({
+const rewrittenArticleSchema = new mongoose.Schema({
   title: { type: String, required: true },
   lead: { type: String, required: false },
   content: { type: String, required: true },
@@ -15,4 +15,7 @@ const crawledArticleSchema = new mongoose.Schema({
   _id: { type: String, required: false },
 });
 
-export const CrawledArticle = crawlerDB.model("Article", crawledArticleSchema);
+export const RewrittenArticle = crawlerDB.model(
+  "Article",
+  rewrittenArticleSchema
+);
