@@ -1,7 +1,6 @@
 import { Mistral } from "@mistralai/mistralai";
 import { CrawlerQueue } from "../models/crawlerQueue.mjs";
 import dotenv from "dotenv";
-import { CrawledArticle } from "../models/crawledArticles.mjs";
 import {
   getPrompt,
   getSummarizationPrompt,
@@ -18,7 +17,7 @@ export const rewriteSoftened = async (articleId, version) => {
       _id: articleId + "-" + version,
     });
     if (!existingArticle) {
-      const article = await CrawledArticle.findOne({
+      const article = await RewrittenArticle.findOne({
         _id: articleId + "-original",
       });
       console.log(
@@ -63,7 +62,7 @@ export const summarize = async (articleId, version, article = null) => {
     });
     if (!existingArticle) {
       if (!article) {
-        article = await CrawledArticle.findOne({
+        article = await RewrittenArticle.findOne({
           _id: articleId + "-original",
         });
       }

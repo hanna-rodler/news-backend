@@ -1,8 +1,5 @@
 let puppeteer, chromium;
-import { cleanContent, convertToTimestamp } from "../utils/utils.mjs";
 import dotenv from "dotenv";
-import { CrawlerQueue } from "../models/crawlerQueue.mjs";
-import { CrawledArticle } from "../models/crawledArticles.mjs";
 import { crawlDetails, crawlOverview } from "../services/crawler.services.mjs";
 if (process.env.APP_ENV === "prod") {
   console.log("Running in prod mode!");

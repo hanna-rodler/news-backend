@@ -2,7 +2,7 @@ import { CrawlerQueue } from "../models/crawlerQueue.mjs";
 import { checkVersionName } from "../utils/utils.mjs";
 import { rewriteSoftened, summarize } from "../services/rewriter.services.mjs";
 import { checkValidity } from "../utils/rewrite.mjs";
-import { CrawledArticle } from "../models/crawledArticles.mjs";
+import { RewrittenArticle } from "../models/rewrittenArticle.mjs";
 
 // TODO: make route just for one article in case one got missed.
 
@@ -95,7 +95,7 @@ export const summarizeOneOriginalArticleController = async (req, res) => {
   try {
     console.log("Summarizing one original article");
     const articleId = req.params.id;
-    const article = await CrawledArticle.findOne({
+    const article = await RewrittenArticle.findOne({
       _id: articleId + "-original",
     });
     console.log("article", article);

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const crawlerDB = mongoose.connection.useDb("crawler");
+const crawlerDB = mongoose.connection.useDb("news-battery");
 
 const crawlerQueueSchema = new mongoose.Schema({
   id: { type: String, required: true },
