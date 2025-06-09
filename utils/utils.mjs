@@ -46,7 +46,7 @@ function extractFiguresAndReplace(text) {
   // Replace <figure> elements with <<fig>> and extract their content
   const updatedText = text.replace(figureRegex, (match) => {
     figures.push(match.trim()); // Save the <figure> content
-    return "<<fig>>"; // Replace with <<fig>>
+    return "";
   });
 
   return { updatedText, figures };
@@ -75,4 +75,49 @@ export function saveToFile(content, folder, fileName) {
   // Write content to the file
   fs.writeFileSync(filePath, content, "utf8");
   console.log(`File written: ${filePath}`);
+}
+
+export function convertToTimestamp(dateString) {
+  // Split the date and time parts
+  const [datePart, timePart] = dateString.split(" ");
+  const [day, month, year] = datePart.split(".").map(Number);
+  const [hour, minute] = timePart.split(".").map(Number);
+
+  // Month in JavaScript Date object is 0-indexed
+  const jsMonth = month - 1;
+
+  // Create a new JavaScript Date object (which MongoDB uses)
+  const date = new Date(year, jsMonth, day, hour, minute, 0, 0);
+
+  return date;
+}
+
+// Adds target="_blank" to all <a> tags in the input HTML string
+export function addTargetBlank(text) {
+  return text.replace(/<a\b([^>]*)>/gi, (match, attrs) => {
+    // If target already exists, replace it; otherwise, add it
+    if (/target\s*=\s*(['"])[^'"]*\1/i.test(attrs)) {
+      return `<a${attrs.replace(
+        /target\s*=\s*(['"])[^'"]*\1/i,
+        'target="_blank"'
+      )}>`;
+    } else {
+      return `<a${attrs} target="_blank">`;
+    }
+  });
+}
+
+export function checkVersionName(version) {
+  const validVersions = [
+    "softer",
+    "softerShort",
+    "softerShortest",
+    "verySoft",
+    "verySoftShort",
+    "verySoftShortest",
+    "original",
+    "originalShort",
+    "originalShortest",
+  ];
+  return validVersions.includes(version);
 }

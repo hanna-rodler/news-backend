@@ -1,12 +1,13 @@
 import express from "express";
-
+import crawlerRoutes from "./routes/crawler.routes.mjs";
+import rewriterRoutes from "./routes/rewriterRoutes.mjs";
 import {
   getPrompt7b,
   getPrompt9c,
   getSofterPromptResponse,
   getVerySoftPromptResponse,
 } from "./features/mistral.mjs";
-import { scrapeWebsiteDetail, scrapeOrfHome } from "./features/webScraper.mjs";
+import { connectToDB } from "./config/db.mjs";
 // import { title, article, lead } from './articles/Trump-Grenell.js';
 // import { title, article, lead } from './articles/israel-klinikdirektor.js';
 import { article } from "./articles/femizid.js";
@@ -18,27 +19,13 @@ import {
 } from "./utils/mistral.mjs";
 
 var app = express();
-app.get("/orf", async function (request, response) {
-  await scrapeOrfHome("https://orf.at/")
-    .then((result) => {
-      response.send(result);
-    })
-    .catch((error) => {
-      console.log("error", error);
-      response.send(error);
-    });
-});
 
-app.get("/orf/detail", async function (req, response) {
-  // "https://orf.at/stories/3380511/"
-  await scrapeWebsiteDetail(req.query.story)
-    .then((result) => {
-      response.send(result);
-    })
-    .catch((error) => {
-      console.log("error", error);
-      response.send(error);
-    });
+app.use("/api/crawl", crawlerRoutes);
+
+app.use("/api/rewrite", rewriterRoutes);
+
+app.get("/status", (req, res) => {
+  res.send("✅ Server is running");
 });
 
 app.get("/mistral/prompt9c", async function (req, res) {
@@ -117,6 +104,11 @@ app.get("/mistral", async function (req, res) {
   }
 });
 
-app.listen(4200, function () {
-  console.log("Started application on port %d", 4200);
-});
+const startServer = async () => {
+  await connectToDB(process.env.MONGO_URI);
+  app.listen(process.env.PORT, () =>
+    console.log(`🚀 Server running on http://localhost:${process.env.PORT}`)
+  );
+};
+
+startServer();
