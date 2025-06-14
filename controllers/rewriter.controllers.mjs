@@ -1,10 +1,8 @@
 import { CrawlerQueue } from "../models/crawlerQueue.mjs";
-import { checkVersionName } from "../utils/utils.mjs";
+import { checkVersionName, containsArticleNums } from "../utils/utils.mjs";
 import { rewriteSoftened, summarize } from "../services/rewriter.services.mjs";
 import { checkValidity } from "../utils/rewrite.mjs";
 import { RewrittenArticle } from "../models/rewrittenArticle.mjs";
-
-// TODO: make route just for one article in case one got missed.
 
 export const rewriteOneArticleController = async (req, res) => {
   try {
@@ -15,9 +13,13 @@ export const rewriteOneArticleController = async (req, res) => {
         const result = await rewriteArticle(articleId, version);
         const {
           isFullyRewritten,
+          containsNumbers,
           softenedArticle,
+          softenedArticleNums,
           summarizedShort,
+          summarizedShortNums,
           summarizedShortest,
+          summarizedShortestNums,
         } = result;
         if (
           isFullyRewritten &&
@@ -25,6 +27,21 @@ export const rewriteOneArticleController = async (req, res) => {
           checkValidity(summarizedShort) &&
           checkValidity(summarizedShortest)
         ) {
+          if (
+            containsNumbers &&
+            checkValidity(softenedArticleNums) &&
+            checkValidity(summarizedShortNums) &&
+            checkValidity(summarizedShortestNums)
+          ) {
+            return res.status(200).json({
+              softenedArticle,
+              softenedArticleNums,
+              summarizedShort,
+              summarizedShortNums,
+              summarizedShortest,
+              summarizedShortestNums,
+            });
+          }
           return res
             .status(200)
             .json({ softenedArticle, summarizedShort, summarizedShortest });
@@ -94,9 +111,10 @@ export const summarizeOriginalArticlesController = async (req, res) => {
 export const summarizeOneOriginalArticleController = async (req, res) => {
   try {
     console.log("Summarizing one original article");
-    const articleId = req.params.id;
+    const articleId = Number(req.params.id);
     const article = await RewrittenArticle.findOne({
-      _id: articleId + "-original",
+      id: articleId,
+      version: "original",
     });
     console.log("article", article);
     if (article) {
@@ -186,27 +204,87 @@ export const rewriteMultipleArticlesController = async (req, res) => {
 async function rewriteArticle(articleId, version) {
   try {
     console.log("article:", articleId, " version:", version);
-    let softenedArticle = await rewriteSoftened(articleId, version);
-    if (checkValidity(softenedArticle)) {
-      const summarizedShort = await summarize(
+    const originalArticle = await RewrittenArticle.findOne({
+      id: articleId,
+      version: "original",
+    });
+    const containsNumbers = containsArticleNums(originalArticle);
+    let articles = {
+      softenedArticle: {},
+      softenedArticleNums: {},
+      summarizedShort: {},
+      summarizedShortNums: {},
+      summarizedShortest: {},
+      summarizedShortestNums: {},
+      isFullyRewritten: false,
+      containsNumbers,
+    };
+    articles.softenedArticle = await rewriteSoftened(
+      articleId,
+      version,
+      originalArticle
+    );
+    if (checkValidity(articles.softenedArticle)) {
+      console.log("softened Article is valid");
+      articles.summarizedShort = await summarize(
         articleId,
         version + "Short",
-        softenedArticle
+        articles.softenedArticle
       );
-      const summarizedShortest = await summarize(
+      articles.summarizedShortest = await summarize(
         articleId,
         version + "Shortest",
-        softenedArticle
+        articles.softenedArticle
       );
-      return {
-        softenedArticle,
-        summarizedShort,
-        summarizedShortest,
-        isFullyRewritten: true,
-      };
     } else {
-      return { message: "No valid article found", isFullyRewritten: false };
+      return {
+        message: "Rewritten article not valid",
+        isFullyRewritten: false,
+      };
     }
+
+    if (containsNumbers) {
+      console.log("-123- Contains numbers -123-");
+      let numsRewritten = await rewriteSoftened(
+        articleId,
+        version + "Nums",
+        originalArticle,
+        true
+      );
+      console.log("Nums rewritten article", numsRewritten);
+      if (numsRewritten.hasCasualityNumbers === false) {
+        console.log(
+          "Article ",
+          articleId,
+          "has casuality numbers: ",
+          numsRewritten.hasCasualityNumbers
+        );
+        articles.isFullyRewritten = true;
+      } else {
+        articles.softenedArticleNums = numsRewritten;
+        if (checkValidity(articles.softenedArticleNums)) {
+          console.log("softened num article valid");
+          articles.summarizedShortNums = await summarize(
+            articleId,
+            version + "Short" + "Nums",
+            articles.softenedArticleNums
+          );
+          articles.summarizedShortestNums = await summarize(
+            articleId,
+            version + "Shortest" + "Nums",
+            articles.softenedArticleNums
+          );
+        } else {
+          return {
+            message: "Rewritten num article not valid",
+            isFullyRewritten: false,
+          };
+        }
+      }
+    }
+
+    articles.isFullyRewritten = true;
+    return articles;
   } catch (error) {
     return res.status(500).json({
       message: `Rewrite for version ${version} failed`,

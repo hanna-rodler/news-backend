@@ -20,6 +20,7 @@ export const crawlOverviewController = async (req, res) => {
     } else {
       res.status(404).json({ message: "No articles found" });
     }
+    res.json({ overview });
   } catch (error) {
     return {
       message: "Overview crawl failed",
@@ -32,20 +33,21 @@ export const crawlOverviewController = async (req, res) => {
 export const crawlDetailsController = async (req, res) => {
   try {
     const result = await crawlDetails();
-    console.log("result", result);
     if (result.shouldSaveCount !== result.articleDetails.length) {
-      // TODO: try again?
       throw new Error(
         "Details not saved, count mismatch. Expected: " +
           result.shouldSaveCount +
           ", but got: " +
-          result.articleDetails.length
+          result.articleDetails.length +
+          ". Skipped: " +
+          result.skippedArticles
       );
     }
     res.send({
       status: "200",
       message: "Article details crawled successfully",
       shouldSave: result.shouldSaveCount,
+      skipped: result.skippedArticles,
       saved: result.articleDetails.length,
     });
   } catch (error) {

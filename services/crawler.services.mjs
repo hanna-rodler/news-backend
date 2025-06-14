@@ -37,14 +37,46 @@ export const crawlOverview = async () => {
     const page = await browser.newPage();
     const url = "https://orf.at/";
     await page.goto(url);
+    console.log("Crawling overview");
 
-    const results = await page.evaluate(() => {
+    const results = await page.evaluate(async () => {
+      console.log("Evaluating page for overview crawl");
       const ressorts = ["ukraine-krieg", "inland", "ausland", "gaza"];
       const hasMatchingClass = (element) => {
+        console.log("Checking element: ", element.classList);
         return ressorts.some((ressort) => element.classList.contains(ressort));
       };
 
-      // Find all elements with `data-oewatag` containing "politik"
+      // get all elments from oon-grid
+      const oonGridElements = Array.from(
+        document.querySelectorAll(".oon-grid .oon-grid-item")
+      );
+      const oonGridElementsToEvaluate = [];
+      console.log("Found oon-grid elements: ", oonGridElements.length);
+      for (const el of oonGridElements) {
+        console.log("Element: ", el);
+        // get a tag
+        const anchor = el.querySelector("a");
+        if (anchor) {
+          // follow that link
+          const href = anchor.getAttribute("href");
+          if (href.includes("orf.at/stories/")) {
+            const id = href.split("/")[4];
+            let headline = anchor
+              .getElementsByClassName("oon-grid-texts-headline")[0]
+              .innerText.trim();
+            headline = headline.replace(/\n/g, "").replace(/\s{2,}/g, " ");
+            oonGridElementsToEvaluate.push({
+              href: href,
+              id: id ? Number(id) : null,
+              headline: headline ? headline : null,
+              isWaitingForCategoryEvaluation: true,
+            });
+          }
+        }
+      }
+
+      // // Find all elements with `data-oewatag` containing "politik"
       const elements = Array.from(
         document.querySelectorAll("[data-oewatag]")
       ).filter((el) => /politik/i.test(el.getAttribute("data-oewatag")));
@@ -58,10 +90,9 @@ export const crawlOverview = async () => {
         // const anchorInfo = getAnchorInfo(parent);
         return {
           subtarget,
-          id: id ? id : null,
+          id: id ? Number(id) : null,
           href: href ? href : null,
           headline: headline ? headline.trim() : null,
-          _id: `${id}-original`,
         };
       });
 
@@ -79,10 +110,9 @@ export const crawlOverview = async () => {
           const headline = anchor.innerText;
           return {
             subtarget: tickerParent.classList[1],
-            id: id ? id : null,
+            id: id ? Number(id) : null,
             href: href ? href : null,
             headline: headline ? headline.trim() : null,
-            _id: `${id}-original`,
           };
         }
       });
@@ -90,27 +120,35 @@ export const crawlOverview = async () => {
         (item) => item != null
       );
 
-      return mappedElements.concat(filteredAdditionalElements);
+      return mappedElements
+        .concat(filteredAdditionalElements)
+        .concat(oonGridElementsToEvaluate);
     });
 
+    const updatedArticles = [];
+
     for (const result of results) {
-      console.log("Result: ", result._id, result.id);
-      const existingElement = await CrawlerQueue.findOne({ _id: result._id });
+      console.log("Result: ", result.id);
+      let existingElement = await CrawlerQueue.findOne({ id: result.id });
+      if (!existingElement) {
+        existingElement = await RewrittenArticle.findOne({ id: result.id });
+      }
       if (!existingElement) {
         const crawlerQueueEl = new CrawlerQueue(result);
+        updatedArticles.push(crawlerQueueEl);
         try {
           await crawlerQueueEl.save();
-          console.log("Element saved to the database ", crawlerQueueEl);
+          // console.log("Element saved to the database ", crawlerQueueEl);
         } catch (error) {
           console.error("Error saving element to the database:", error, result);
         }
       } else {
-        console.log("Element already exists in the database ", result._id);
+        console.log("Element already exists in the database ", result.id);
       }
     }
 
     // TODO ticker-story ticker-story-quicklink <- add
-    return results;
+    return updatedArticles;
   } catch (error) {
     console.error("Error during scraping:", error);
     return [];
@@ -122,6 +160,8 @@ export const crawlDetails = async (req, res) => {
   const articleDetails = [];
   const articleOverview = await CrawlerQueue.find().limit(50);
   let nonExistingArticles = 0;
+  let skippedArticles = [];
+  let savedArticles = 0;
   try {
     let launchOptions = {
       headless: true, // Default to headless in production
@@ -138,9 +178,8 @@ export const crawlDetails = async (req, res) => {
 
     const browser = await puppeteer.launch(launchOptions);
     for (const articleOverviewItem of articleOverview) {
-      console.log("crawling article details for ", articleOverviewItem.id);
       const existingArticle = await RewrittenArticle.findOne({
-        _id: `${articleOverviewItem.id}-original`,
+        id: articleOverviewItem.id,
       });
       if (!existingArticle) {
         nonExistingArticles = nonExistingArticles + 1;
@@ -153,16 +192,55 @@ export const crawlDetails = async (req, res) => {
           date: null,
           footer: null,
           href: articleOverviewItem.href,
-          category: articleOverviewItem.subtarget,
+          category: articleOverviewItem.subtarget
+            ? articleOverviewItem.subtarget.toLowerCase()
+            : null,
           id: articleOverviewItem.id,
-          _id: `${articleOverviewItem.id}-original`,
+          isWaitingForCategoryEvaluation:
+            articleOverviewItem.isWaitingForCategoryEvaluation
+              ? articleOverviewItem.isWaitingForCategoryEvaluation
+              : false,
         };
-        console.log("Crawling article details for ", article);
-        const url = "https://orf.at/stories/" + articleOverviewItem.id + "/";
+        const url = articleOverviewItem.href;
         const page = await browser.newPage();
         await page.goto(url);
 
         try {
+          if (articleOverviewItem.isWaitingForCategoryEvaluation) {
+            const oewaPath = await page.$$eval("script", (scripts) => {
+              if (scripts.length > 0) {
+                for (const script of scripts) {
+                  const text = script.textContent || "";
+
+                  const match = text.match(
+                    /var\s+oewa_path\s*=\s*["']([^"']+)["']/
+                  );
+                  if (match) {
+                    return match[1];
+                  }
+                }
+              }
+              return null;
+            });
+
+            if (
+              !oewaPath ||
+              !oewaPath.includes("/Politik/") ||
+              oewaPath.split("/").length < 3
+            ) {
+              nonExistingArticles = nonExistingArticles - 1;
+              console.log(
+                "Skipping article due to missing or invalid oewaPath:",
+                article.id
+              );
+            }
+
+            // Only now assign the clean category
+            console.log("oewaPath", oewaPath);
+            article.category = oewaPath.split("/")[2].toLowerCase();
+          }
+
+          console.log("article", article.title, "category", article.category);
           // Lead
           try {
             const lead = await page.$eval(".story-lead-text", (el) =>
@@ -206,9 +284,7 @@ export const crawlDetails = async (req, res) => {
               "div.story-footer div.byline p",
               (el) => el.innerHTML.trim()
             );
-            console.log("Footer found:", footer);
             const cleanedFotter = addTargetBlank(footer);
-            console.log("Footer cleaned:", cleanedFotter);
             article.footer = cleanedFotter;
           } catch (error) {
             console.warn("Footer not found:", error.message);
@@ -221,10 +297,37 @@ export const crawlDetails = async (req, res) => {
             }
           });
 
+          if (article.category === "inland") {
+            article.category = "politikinland";
+          } else if (article.category === "ausland") {
+            article.category = "politikausland";
+          }
           const crawledArticle = new RewrittenArticle(article);
           try {
-            crawledArticle.save();
-            console.log("Article saved to the database ", crawledArticle);
+            const validCategories = [
+              "wirtschaftspolitik",
+              "politikausland",
+              "politikinland",
+              "ukraine-krieg",
+              "gaza",
+            ];
+            if (validCategories.includes(article.category)) {
+              savedArticles = savedArticles + 1;
+              crawledArticle.save();
+              console.log(
+                "Article saved to the database ",
+                crawledArticle.title,
+                crawledArticle.id,
+                crawledArticle.category
+              );
+              articleDetails.push(article);
+            } else {
+              skippedArticles.push(article.id);
+              await CrawlerQueue.deleteOne({ id: article.id });
+              console.warn(
+                `Article category "${article.category}" is not valid. Skipping article.`
+              );
+            }
           } catch (error) {
             console.error(
               "Error saving article to the database:",
@@ -232,19 +335,20 @@ export const crawlDetails = async (req, res) => {
               crawledArticle
             );
           }
-          articleDetails.push(article);
         } catch (error) {
           console.error("Could not find the div.story-story:", error);
         }
       } else {
         console.log(
           "Article already exists in the database ",
-          existingArticle._id
+          existingArticle.id
         );
       }
     }
     return {
       shouldSaveCount: nonExistingArticles,
+      skippedArticles: skippedArticles,
+      savedArticles: savedArticles,
       articleDetails: articleDetails,
     };
   } catch (error) {
