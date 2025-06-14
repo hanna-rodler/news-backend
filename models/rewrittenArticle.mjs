@@ -11,8 +11,7 @@ const rewrittenArticleSchema = new mongoose.Schema({
   date: { type: Date, required: false },
   category: { type: String, required: true },
   footer: { type: String, required: false },
-  id: { type: String, required: true },
-  _id: { type: String, required: false },
+  id: { type: Number, required: true },
 });
 
 export const RewrittenArticle = crawlerDB.model(

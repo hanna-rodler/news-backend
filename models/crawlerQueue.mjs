@@ -2,11 +2,10 @@ import mongoose from "mongoose";
 const crawlerDB = mongoose.connection.useDb("news-battery");
 
 const crawlerQueueSchema = new mongoose.Schema({
-  id: { type: String, required: true },
+  id: { type: Number, required: true },
   href: { type: String, required: true },
   headline: { type: String, required: true },
-  subtarget: { type: String, required: true },
-  _id: { type: String, required: false },
+  subtarget: { type: String, required: false },
   versions: {
     originalShort: { type: Boolean, default: false },
     originalShortest: { type: Boolean, default: false },
@@ -16,6 +15,16 @@ const crawlerQueueSchema = new mongoose.Schema({
     verySoft: { type: Boolean, default: false },
     verySoftShort: { type: Boolean, default: false },
     verySoftShortest: { type: Boolean, default: false },
+    softerNums: { type: Boolean, default: false },
+    softerShortNums: { type: Boolean, default: false }, // TODO
+    softerShortestNums: { type: Boolean, default: false }, // TODO
+    verySoftNums: { type: Boolean, default: false },
+    verySoftShortNums: { type: Boolean, default: false }, // TODO
+    verySoftShortestNums: { type: Boolean, default: false }, // TODO
+  },
+  isWaitingForCategoryEvaluation: {
+    type: Boolean,
+    default: false,
   },
 });
 

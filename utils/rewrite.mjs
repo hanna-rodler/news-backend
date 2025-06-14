@@ -15,11 +15,22 @@ const return_format = `Return only the rewritten german article in a json_object
 const restriction_political_softer =
   " Ensure that the political or ideological descriptors are retained while still focusing on a softer approach.";
 
-const summarization_shorter =
+const summarization_shorter_original =
   "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 100 words.";
 
-const summarization_veryShort =
-  "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 60 words.";
+const summarization_shortest_original =
+  "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 50 words.";
+
+const rewrite_numbers_softest = `You are professional German journalist. Your audience are German people who are stressed, feel sad and anxious. Ensure factual correctness. Look up the definition of casuality numbers. Identify if there are casuality numbers in the article.`;
+
+const rewrite_numbers_softer =
+  "You are professional German journalist. Your target group are German 12 to 16 year olds that have high German text comprehesion skills. Ensure factual correctness. Look up the definition of casuality numbers. Identify if there are casuality numbers in the article.";
+
+const numbers_return_and_input_statement_lead =
+  'The article is provided in the json object article with the keys "title", "lead" and "content". If there are casuality numbers, modify all of them with fitting categorizations like "mehrere", "ein paar", "einige", "viele", and so on and return the german article in a json_object with the keys "title", "lead" and "content". If there are no casuality numbers present, return `{ hasCasualityNumbers: false}`.';
+
+const numbers_return_and_input_statement =
+  'The article is provided in the json object article with the keys "title", "lead" and "content". If there are casuality numbers, modify all of them with fitting categorizations like "mehrere", "ein paar", "einige", "viele", and so on and return the german article in a json_object with the keys "title", "lead" and "content". If there are no casuality numbers present, return `{ hasCasualityNumbers: false}`.';
 
 function getFormatInstructionWithArticle(article) {
   if (article.lead !== "" && article.lead !== null) {
@@ -31,7 +42,7 @@ function getFormatInstructionWithArticle(article) {
     return (
       input_format_with_lead +
       return_format_lead +
-      "Article = " +
+      "\nArticle = " +
       JSON.stringify(articleWithLead)
     );
   } else {
@@ -39,55 +50,69 @@ function getFormatInstructionWithArticle(article) {
       title: article.title,
       content: article.content,
     };
-    console.log("articleWithoutLead", articleWithoutLead);
 
     return (
       input_format_without_lead +
       return_format +
-      "Article = " +
+      "\nArticle = " +
       JSON.stringify(articleWithoutLead)
     );
   }
 }
 
-// prompt types: softer, verySoft, softerShort, verySoftShort, originalShort, originalLong
+function getFormatInstructionWithArticleNumbersRewrite(article) {
+  const baseArticle = {
+    title: article.title,
+    content: article.content,
+  };
+
+  const articleWithLead =
+    article.lead !== "" && article.lead !== null
+      ? { ...baseArticle, lead: article.lead }
+      : baseArticle;
+
+  const instruction = articleWithLead.hasOwnProperty("lead")
+    ? numbers_return_and_input_statement_lead
+    : numbers_return_and_input_statement;
+
+  return `${instruction}\nArticle = ${JSON.stringify(articleWithLead)}`;
+}
+
 export function getPrompt(promptType, article) {
   let prompt;
   switch (promptType) {
     case "softer":
-      prompt = softerPrompt;
+      prompt =
+        softerPrompt +
+        restriction_political_softer +
+        getFormatInstructionWithArticle(article);
       break;
     case "verySoft":
-      prompt = verySoftPrompt;
+      prompt =
+        verySoftPrompt +
+        restriction_political_softer +
+        getFormatInstructionWithArticle(article);
       break;
-    case "softerShort":
-      prompt = undefined;
+    case "softerNums":
+      prompt =
+        rewrite_numbers_softer +
+        getFormatInstructionWithArticleNumbersRewrite(article);
       break;
-    case "verySoftShort":
-      prompt = undefined;
-      break;
-    case "originalShort":
-      prompt = undefined;
-      break;
-    case "originalLong":
-      prompt = undefined;
+    case "verySoftNums":
+      prompt =
+        rewrite_numbers_softest +
+        getFormatInstructionWithArticleNumbersRewrite(article);
       break;
     default:
       throw new Error("Invalid prompt type");
   }
-
-  const finalPrompt =
-    prompt +
-    getFormatInstructionWithArticle(article) +
-    restriction_political_softer;
-
-  return finalPrompt;
+  return prompt;
 }
 
 export function getSummarizationPrompt(article, isVeryShort = false) {
   const summarizationPrompt = isVeryShort
-    ? summarization_veryShort
-    : summarization_shorter;
+    ? summarization_shortest_original
+    : summarization_shorter_original;
 
   const finalPrompt =
     summarizationPrompt + getFormatInstructionWithArticle(article);

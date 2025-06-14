@@ -27,6 +27,7 @@ export function cleanContent(text) {
     .replace(/<p class="caption tvthek stripe-credits"[\s\S]*?<\/p>/g, "")
     .replace(/<div class="stripe-video-wrapper"[\s\S]*?<\/div>/g, "")
     .replace(/<section class="stripe [\s\S]*?<\/section>/g, "")
+    .replace(/<div class="player"[\s\S]*?<\/div>/g, "")
     .replace(/\n+/g, "")
     .trim();
 
@@ -46,7 +47,7 @@ function extractFiguresAndReplace(text) {
   // Replace <figure> elements with <<fig>> and extract their content
   const updatedText = text.replace(figureRegex, (match) => {
     figures.push(match.trim()); // Save the <figure> content
-    return "<<fig>>"; // Replace with <<fig>>
+    return "";
   });
 
   return { updatedText, figures };
@@ -107,14 +108,30 @@ export function addTargetBlank(text) {
   });
 }
 
+export function containsArticleNums(article) {
+  const containsNumberRegex = /\d+/;
+
+  return (
+    containsNumberRegex.test(article.title) ||
+    containsNumberRegex.test(article.lead) ||
+    containsNumberRegex.test(article.content)
+  );
+}
+
 export function checkVersionName(version) {
   const validVersions = [
     "softer",
     "softerShort",
     "softerShortest",
+    "softerNums",
+    "softerShortNums",
+    "softerShortestNums",
     "verySoft",
     "verySoftShort",
     "verySoftShortest",
+    "verySoftNums",
+    "verySoftShortNums",
+    "verySoftShortestNums",
     "original",
     "originalShort",
     "originalShortest",

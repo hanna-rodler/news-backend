@@ -8,37 +8,62 @@ import {
 } from "../utils/rewrite.mjs";
 import { RewrittenArticle } from "../models/rewrittenArticle.mjs";
 import { checkVersionName } from "../utils/utils.mjs";
+import { NoNumRewriter } from "../models/noNumRewrites.mjs";
 dotenv.config();
 const apiKey = process.env.MISTRAL_API_KEY;
 
-export const rewriteSoftened = async (articleId, version) => {
+export const rewriteSoftened = async (
+  articleId,
+  version,
+  originalArticle,
+  isRewriteNums = false
+) => {
   try {
     const existingArticle = await RewrittenArticle.findOne({
-      _id: articleId + "-" + version,
+      id: articleId,
+      version: version,
     });
     if (!existingArticle) {
-      const article = await RewrittenArticle.findOne({
-        _id: articleId + "-original",
-      });
+      if (isRewriteNums) {
+        const shouldNotRewriteNum = await NoNumRewriter.findOne({
+          id: articleId,
+        });
+        if (shouldNotRewriteNum) {
+          return {
+            hasCasualityNumbers: false,
+          };
+        }
+      }
       console.log(
         "rewriting article",
-        article.title,
+        originalArticle.title,
         " with version " + version
       );
 
-      const userPrompt = getPrompt(version, article);
-      let rewrittenArticle = await rewriteArticle(userPrompt);
+      const userPrompt = getPrompt(version, originalArticle);
+      let rewrittenArticle = await rewriteArticleMistral(userPrompt);
+      if (rewrittenArticle.hasCasualityNumbers === false) {
+        const noNumRewrite = new NoNumRewriter({ id: articleId });
+        noNumRewrite.save();
+        return {
+          hasCasualityNumbers: rewrittenArticle.hasCasualityNumbers,
+        };
+      } else {
+        const savedArticle = saveArticle(
+          originalArticle,
+          rewrittenArticle,
+          version
+        );
+        if (checkValidity(savedArticle)) {
+          await updateVersionValidities(articleId, version, true);
+        }
 
-      const savedArticle = saveArticle(article, rewrittenArticle, version);
-      if (checkValidity(savedArticle)) {
-        await updateVersionValidities(articleId, version, true);
+        return savedArticle;
       }
-
-      return savedArticle;
     } else {
       console.log(
         `Article with version ${version} already exists in the database`,
-        existingArticle
+        existingArticle.title
       );
       return existingArticle;
     }
@@ -57,25 +82,35 @@ export const summarize = async (articleId, version, article = null) => {
     if (checkVersionName(version) === false) {
       throw new Error("Invalid version provided for summarization");
     }
+
     const existingArticle = await RewrittenArticle.findOne({
-      _id: articleId + "-" + version,
+      id: articleId,
+      version: version,
     });
     if (!existingArticle) {
       if (!article) {
+        let baseVersion = "original";
+        if (version.includes("softer")) {
+          baseVersion = "softer";
+        } else if (version.includes("verySoft")) {
+          baseVersion = "verySoft";
+        }
+        console.log("getting base version ", baseVersion);
         article = await RewrittenArticle.findOne({
-          _id: articleId + "-original",
+          id: articleId,
+          version: baseVersion,
         });
       }
       console.log("summarizing article", article.title, version);
 
-      const isVeryShort = version.toLowerCase().includes("shortest")
+      const isShortest = version.toLowerCase().includes("shortest")
         ? true
         : false;
 
-      console.log("isVeryShort", isVeryShort);
-      const summarizationPrompt = getSummarizationPrompt(article, isVeryShort);
+      console.log("isShortest", isShortest);
+      const summarizationPrompt = getSummarizationPrompt(article, isShortest);
 
-      let summarizedArticle = await rewriteArticle(summarizationPrompt);
+      let summarizedArticle = await rewriteArticleMistral(summarizationPrompt);
 
       const savedArticle = saveArticle(article, summarizedArticle, version);
       if (checkValidity(savedArticle)) {
@@ -100,7 +135,7 @@ export const summarize = async (articleId, version, article = null) => {
   }
 };
 
-async function rewriteArticle(userPrompt) {
+async function rewriteArticleMistral(userPrompt) {
   try {
     const client = new Mistral({ apiKey: apiKey });
     console.log("init client");
@@ -117,18 +152,20 @@ async function rewriteArticle(userPrompt) {
       safe_prompt: false,
     });
 
-    console.log("got chat response", chatResponse);
+    // console.log("got chat response", chatResponse);
 
-    let rewrittenText = [];
-
-    console.log("rewrittenText", chatResponse.choices[0].message);
-    rewrittenText[0] = JSON.parse(chatResponse.choices[0].message.content);
-    // rewrittenText[1] = JSON.parse(chatResponse.choices[1].message.content);
+    console.log("rewrittenText", chatResponse.choices[0].message.content);
+    let rewrittenText = JSON.parse(chatResponse.choices[0].message.content);
+    console.log("rewrittenText parsed", rewrittenText);
+    if (rewrittenText.hasCasualityNumbers === false) {
+      console.log("return no casuality numbers ", rewrittenText);
+      return { hasCasualityNumbers: rewrittenText.hasCasualityNumbers };
+    }
 
     const article = {
-      title: rewrittenText[0].title,
-      lead: rewrittenText[0].lead !== undefined ? rewrittenText[0].lead : null,
-      content: rewrittenText[0].content,
+      title: rewrittenText.title,
+      lead: rewrittenText.lead !== undefined ? rewrittenText.lead : null,
+      content: rewrittenText.content,
     };
     return article;
   } catch (error) {
@@ -152,7 +189,6 @@ function saveArticle(originalArticle, rewrittenArticle, version) {
       category: originalArticle.category,
       footer: originalArticle.footer,
       id: originalArticle.id,
-      _id: originalArticle.id + "-" + version,
     });
     article.save();
     return article;
