@@ -251,7 +251,13 @@ async function rewriteArticle(articleId, version) {
         originalArticle,
         true
       );
-      console.log("Nums rewritten article", numsRewritten);
+      console.log(
+        "Nums rewritten article",
+        "title:",
+        numsRewritten.title,
+        "hasCasualityNumbers?: ",
+        numsRewritten.hasCasualityNumbers
+      );
       if (numsRewritten.hasCasualityNumbers === false) {
         console.log(
           "Article ",
@@ -260,6 +266,8 @@ async function rewriteArticle(articleId, version) {
           numsRewritten.hasCasualityNumbers
         );
         articles.isFullyRewritten = true;
+      } else if (numsRewritten.success === false) {
+        throw Error(numsRewritten);
       } else {
         articles.softenedArticleNums = numsRewritten;
         if (checkValidity(articles.softenedArticleNums)) {
