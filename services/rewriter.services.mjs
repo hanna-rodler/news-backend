@@ -41,13 +41,23 @@ export const rewriteSoftened = async (
       );
 
       const userPrompt = getPrompt(version, originalArticle);
+      console.log("User Prompt", userPrompt);
       let rewrittenArticle = await rewriteArticleMistral(userPrompt);
+      console.log(
+        "rewritten: title",
+        rewrittenArticle.title,
+        " success: ",
+        rewrittenArticle.success,
+        " hasCasualityNumbers: ",
+        rewrittenArticle.hasCasualityNumbers
+      );
       if (rewrittenArticle.hasCasualityNumbers === false) {
         const noNumRewrite = new NoNumRewriter({ id: articleId });
         noNumRewrite.save();
         return {
           hasCasualityNumbers: rewrittenArticle.hasCasualityNumbers,
         };
+        // } else if (!rewrittenArticle.success === false) {
       } else {
         const savedArticle = saveArticle(
           originalArticle,
@@ -59,6 +69,8 @@ export const rewriteSoftened = async (
         }
 
         return savedArticle;
+        // } else {
+        //   return rewrittenArticle;
       }
     } else {
       console.log(
@@ -129,7 +141,7 @@ export const summarize = async (articleId, version, article = null) => {
     console.error("Error during rewriting:", error);
     return {
       success: false,
-      message: "Failed to rewrite very soft article",
+      message: "Failed to rewrite softened article",
       error: error.message,
     };
   }
@@ -156,7 +168,7 @@ async function rewriteArticleMistral(userPrompt) {
 
     console.log("rewrittenText", chatResponse.choices[0].message.content);
     let rewrittenText = JSON.parse(chatResponse.choices[0].message.content);
-    console.log("rewrittenText parsed", rewrittenText);
+    console.log("rewrittenText parsed", rewrittenText.title);
     if (rewrittenText.hasCasualityNumbers === false) {
       console.log("return no casuality numbers ", rewrittenText);
       return { hasCasualityNumbers: rewrittenText.hasCasualityNumbers };

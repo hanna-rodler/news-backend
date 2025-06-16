@@ -13,7 +13,7 @@ const return_format_lead = `Return only the rewritten german article in a json_o
 const return_format = `Return only the rewritten german article in a json_object with the keys "title" and "content". `;
 
 const restriction_political_softer =
-  " Ensure that the political or ideological descriptors are retained while still focusing on a softer approach.";
+  " Ensure that the political or ideological descriptors are retained while still focusing on a softer approach. ";
 
 const summarization_shorter_original =
   "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 100 words.";
@@ -33,7 +33,7 @@ const numbers_return_and_input_statement =
   'The article is provided in the json object article with the keys "title", "lead" and "content". If there are casuality numbers, modify all of them with fitting categorizations like "mehrere", "ein paar", "einige", "viele", and so on and return the german article in a json_object with the keys "title", "lead" and "content". If there are no casuality numbers present, return `{ hasCasualityNumbers: false}`.';
 
 function getFormatInstructionWithArticle(article) {
-  if (article.lead !== "" && article.lead !== null) {
+  if (article.lead && article.lead !== "" && article.lead !== null) {
     const articleWithLead = {
       title: article.title,
       lead: article.lead,
@@ -67,10 +67,11 @@ function getFormatInstructionWithArticleNumbersRewrite(article) {
   };
 
   const articleWithLead =
-    article.lead !== "" && article.lead !== null
+    article.lead && article.lead !== "" && article.lead !== null
       ? { ...baseArticle, lead: article.lead }
       : baseArticle;
 
+  console.log("get lead instruction? ", articleWithLead.hasOwnProperty("lead"));
   const instruction = articleWithLead.hasOwnProperty("lead")
     ? numbers_return_and_input_statement_lead
     : numbers_return_and_input_statement;
@@ -106,10 +107,12 @@ export function getPrompt(promptType, article) {
     default:
       throw new Error("Invalid prompt type");
   }
+  console.log("prompt: ", prompt);
   return prompt;
 }
 
 export function getSummarizationPrompt(article, isVeryShort = false) {
+  console.log("get summarization prompt");
   const summarizationPrompt = isVeryShort
     ? summarization_shortest_original
     : summarization_shorter_original;
@@ -117,6 +120,7 @@ export function getSummarizationPrompt(article, isVeryShort = false) {
   const finalPrompt =
     summarizationPrompt + getFormatInstructionWithArticle(article);
 
+  console.log("final prompt", finalPrompt);
   return finalPrompt;
 }
 

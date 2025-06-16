@@ -47,7 +47,7 @@ function extractFiguresAndReplace(text) {
   // Replace <figure> elements with <<fig>> and extract their content
   const updatedText = text.replace(figureRegex, (match) => {
     figures.push(match.trim()); // Save the <figure> content
-    return "";
+    return "<figplaceholder></figplaceholder>";
   });
 
   return { updatedText, figures };
