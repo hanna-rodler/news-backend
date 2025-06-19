@@ -35,7 +35,7 @@ export async function getPrompt(promptName, temp, article) {
 
   let rewrittenText = [];
 
-  console.log("Chat:", chatResponse.choices[0]);
+  // console.log("Chat:", chatResponse.choices[0]);
   rewrittenText[0] = JSON.parse(chatResponse.choices[0].message.content);
   rewrittenText[1] = JSON.parse(chatResponse.choices[1].message.content);
   rewrittenText[2] = JSON.parse(chatResponse.choices[2].message.content);

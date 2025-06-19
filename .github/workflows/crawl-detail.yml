@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger API endpoint
-        run: curl -X GET https://news-battery-be-net.netlify.app/.netlify/functions/crawl-detail-background
+        run: curl -X GET https://news-battery-be-net.netlify.app/.netlify/functions/crawl-details-background
