@@ -1,8 +1,8 @@
-name: Test Github Actions
+name: Crawl Overview Background
 
 on:
   schedule:
-    - cron: "35 8 * * *"
+    - cron: "40 * * * *"
   workflow_dispatch: # Enable manual trigger from GitHub UI
 
 jobs:
