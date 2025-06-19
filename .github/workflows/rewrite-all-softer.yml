@@ -1,0 +1,15 @@
+name: Rewrtite All Softer
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch: # Enable manual trigger from GitHub UI
+
+jobs:
+  call-endpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger softer endpoint
+        run: curl -X GET https://news-battery-be-net.netlify.app/.netlify/functions/rewrite-all-background/softer
+      - name: Trigger verySoft endpoint
+        run: curl -X GET https://news-battery-be-net.netlify.app/.netlify/functions/rewrite-all-nums-background/softer
