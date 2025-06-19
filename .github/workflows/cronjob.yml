@@ -2,7 +2,7 @@ name: Test Github Actions
 
 on:
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "35 8 * * *"
   workflow_dispatch: # Enable manual trigger from GitHub UI
 
 jobs:
@@ -10,15 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger API endpoint
-        run: curl -X POST https://news-backend-it1u.onrender.com/api/crawl
+        run: curl -X GET https://news-battery-be-net.netlify.app/.netlify/functions/crawl-overview-background
 
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
