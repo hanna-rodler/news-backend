@@ -16,7 +16,7 @@ const restriction_political_softer =
   " Ensure that the political or ideological descriptors are retained while still focusing on a softer approach. ";
 
 const summarization_shorter_original =
-  "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 100 words.";
+  "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 120 words.";
 
 const summarization_shortest_original =
   "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 50 words.";
@@ -107,7 +107,7 @@ export function getPrompt(promptType, article) {
     default:
       throw new Error("Invalid prompt type");
   }
-  console.log("prompt: ", prompt);
+  // console.log("prompt: ", prompt);
   return prompt;
 }
 

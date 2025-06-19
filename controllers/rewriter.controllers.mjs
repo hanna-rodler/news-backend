@@ -1,8 +1,12 @@
+import dotenv from "dotenv";
+import { Mistral } from "@mistralai/mistralai";
 import { CrawlerQueue } from "../models/crawlerQueue.mjs";
 import { checkVersionName, containsArticleNums } from "../utils/utils.mjs";
 import { rewriteSoftened, summarize } from "../services/rewriter.services.mjs";
 import { checkValidity } from "../utils/rewrite.mjs";
 import { RewrittenArticle } from "../models/rewrittenArticle.mjs";
+dotenv.config();
+const apiKey = process.env.MISTRAL_API_KEY;
 
 export const rewriteOneArticleController = async (req, res) => {
   try {
@@ -10,7 +14,9 @@ export const rewriteOneArticleController = async (req, res) => {
     const version = req.params.version;
     if (checkVersionName(version)) {
       try {
-        const result = await rewriteArticle(articleId, version);
+        const client = new Mistral({ apiKey: apiKey });
+        console.log("init client");
+        const result = await rewriteArticle(articleId, version, client);
         const {
           isFullyRewritten,
           containsNumbers,
@@ -78,14 +84,17 @@ export const summarizeOriginalArticlesController = async (req, res) => {
   try {
     const articles = await CrawlerQueue.find().limit(50);
     const successfullyRewritten = [];
+    const client = new Mistral({ apiKey: apiKey });
+    console.log("init client");
+
     for (const article of articles) {
       console.log("Summarizing article", article.title, "with id", article.id);
 
       // short
-      const originalShort = await summarize(article.id, "originalShort");
+      const originalShort = await summarize(article.id, "originalShort", client);
 
       // shortest
-      const originalShortest = await summarize(article.id, "originalShortest");
+      const originalShortest = await summarize(article.id, "originalShortest", client);
       if (checkValidity(originalShort) || checkValidity(originalShortest)) {
         successfullyRewritten.push(article.id);
         console.log(
@@ -119,6 +128,8 @@ export const summarizeOneOriginalArticleController = async (req, res) => {
     console.log("article", article);
     if (article) {
       console.log("Summarizing article", article.title, "with id", article.id);
+      const client = new Mistral({ apiKey: apiKey });
+      console.log("init client");
       // short
       const originalShort = await summarize(article.id, "originalShort");
 
@@ -155,8 +166,10 @@ export const rewriteMultipleArticlesController = async (req, res) => {
       try {
         const articles = await CrawlerQueue.find().limit(50);
         const successfullyRewritten = [];
+        const client = new Mistral({ apiKey: apiKey });
+        console.log("init client");
         for (const article of articles) {
-          const result = await rewriteArticle(article.id, version);
+          const result = await rewriteArticle(article.id, version, client);
           const {
             isFullyRewritten,
             softenedArticle,
@@ -201,7 +214,7 @@ export const rewriteMultipleArticlesController = async (req, res) => {
   }
 };
 
-async function rewriteArticle(articleId, version) {
+async function rewriteArticle(articleId, version, client) {
   try {
     console.log("article:", articleId, " version:", version);
     const originalArticle = await RewrittenArticle.findOne({
@@ -222,19 +235,22 @@ async function rewriteArticle(articleId, version) {
     articles.softenedArticle = await rewriteSoftened(
       articleId,
       version,
-      originalArticle
+      originalArticle,
+      client
     );
     if (checkValidity(articles.softenedArticle)) {
       console.log("softened Article is valid");
       articles.summarizedShort = await summarize(
         articleId,
         version + "Short",
-        articles.softenedArticle
+        articles.softenedArticle,
+        client
       );
       articles.summarizedShortest = await summarize(
         articleId,
         version + "Shortest",
-        articles.softenedArticle
+        articles.softenedArticle,
+        client
       );
     } else {
       return {
@@ -249,7 +265,8 @@ async function rewriteArticle(articleId, version) {
         articleId,
         version + "Nums",
         originalArticle,
-        true
+        client,
+        true,
       );
       console.log(
         "Nums rewritten article",
@@ -275,12 +292,14 @@ async function rewriteArticle(articleId, version) {
           articles.summarizedShortNums = await summarize(
             articleId,
             version + "Short" + "Nums",
-            articles.softenedArticleNums
+            articles.softenedArticleNums,
+            client
           );
           articles.summarizedShortestNums = await summarize(
             articleId,
             version + "Shortest" + "Nums",
-            articles.softenedArticleNums
+            articles.softenedArticleNums,
+            client
           );
         } else {
           return {

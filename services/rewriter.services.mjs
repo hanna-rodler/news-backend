@@ -1,4 +1,3 @@
-import { Mistral } from "@mistralai/mistralai";
 import { CrawlerQueue } from "../models/crawlerQueue.mjs";
 import dotenv from "dotenv";
 import {
@@ -16,6 +15,7 @@ export const rewriteSoftened = async (
   articleId,
   version,
   originalArticle,
+  client,
   isRewriteNums = false
 ) => {
   try {
@@ -41,8 +41,8 @@ export const rewriteSoftened = async (
       );
 
       const userPrompt = getPrompt(version, originalArticle);
-      console.log("User Prompt", userPrompt);
-      let rewrittenArticle = await rewriteArticleMistral(userPrompt);
+      // console.log("User Prompt", userPrompt);
+      let rewrittenArticle = await rewriteArticleMistral(userPrompt, client);
       console.log(
         "rewritten: title",
         rewrittenArticle.title,
@@ -89,7 +89,7 @@ export const rewriteSoftened = async (
   }
 };
 
-export const summarize = async (articleId, version, article = null) => {
+export const summarize = async (articleId, version, client, article = null) => {
   try {
     if (checkVersionName(version) === false) {
       throw new Error("Invalid version provided for summarization");
@@ -122,7 +122,7 @@ export const summarize = async (articleId, version, article = null) => {
       console.log("isShortest", isShortest);
       const summarizationPrompt = getSummarizationPrompt(article, isShortest);
 
-      let summarizedArticle = await rewriteArticleMistral(summarizationPrompt);
+      let summarizedArticle = await rewriteArticleMistral(summarizationPrompt, client);
 
       const savedArticle = saveArticle(article, summarizedArticle, version);
       if (checkValidity(savedArticle)) {
@@ -147,11 +147,8 @@ export const summarize = async (articleId, version, article = null) => {
   }
 };
 
-async function rewriteArticleMistral(userPrompt) {
+async function rewriteArticleMistral(userPrompt, client) {
   try {
-    const client = new Mistral({ apiKey: apiKey });
-    console.log("init client");
-
     const chatResponse = await client.chat.complete({
       model: "mistral-large-latest",
       messages: [{ role: "user", content: userPrompt }],
