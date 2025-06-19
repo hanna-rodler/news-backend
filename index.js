@@ -8,13 +8,9 @@ import {
   getVerySoftPromptResponse,
 } from "./features/mistral.mjs";
 import { connectToDB } from "./config/db.mjs";
-// import { title, article, lead } from './articles/Trump-Grenell.js';
-// import { title, article, lead } from './articles/israel-klinikdirektor.js';
 import { article } from "./articles/femizid.js";
 import {
   getArticle,
-  getSofterPrompt,
-  getVerySoftPrompt,
   isPromptNameValid,
 } from "./utils/mistral.mjs";
 
