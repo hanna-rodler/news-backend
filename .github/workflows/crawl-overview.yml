@@ -1,0 +1,13 @@
+name: Crawl Overview Background
+
+on:
+  schedule:
+    - cron: "40 * * * *"
+  workflow_dispatch: # Enable manual trigger from GitHub UI
+
+jobs:
+  call-endpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger API endpoint
+        run: curl -X GET https://news-battery-be-net.netlify.app/.netlify/functions/crawl-overview-background
