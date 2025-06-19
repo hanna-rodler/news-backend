@@ -2,7 +2,7 @@ name: Crawl Detail
 
 on:
   schedule:
-    - cron: "57 * * * *"
+    - cron: "54 * * * *"
   workflow_dispatch: # Enable manual trigger from GitHub UI
 
 jobs:
