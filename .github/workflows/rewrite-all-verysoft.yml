@@ -2,7 +2,7 @@ name: Rewrite All Very Soft
 
 on:
   schedule:
-    - cron: "5 * * * *"
+    - cron: "7 * * * *"
   workflow_dispatch: # Enable manual trigger from GitHub UI
 
 jobs:

@@ -2,7 +2,7 @@ name: Summarize Originals
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "1 * * * *"
   workflow_dispatch: # Enable manual trigger from GitHub UI
 
 jobs:
