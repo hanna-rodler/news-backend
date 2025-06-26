@@ -43,12 +43,18 @@ function extractFiguresAndReplace(text) {
 
   // Regex to match <figure>...</figure> elements
   const figureRegex = /<figure[\s\S]*?<\/figure>/g;
+  // const imgRegex = /<img[^>]+src="([^">]+)"[^>]*>/g;
 
   // Replace <figure> elements with <<fig>> and extract their content
-  const updatedText = text.replace(figureRegex, (match) => {
+  let updatedText = text.replace(figureRegex, (match) => {
     figures.push(match.trim()); // Save the <figure> content
     return "<figplaceholder></figplaceholder>";
   });
+
+  // updatedText = text.replace(imgRegex, (match) => {
+  //   figures.push(match.trim()); // Save the <figure> content
+  //   return "<imgplaceholder></imgplaceholder>";
+  // });
 
   return { updatedText, figures };
 }
@@ -137,4 +143,13 @@ export function checkVersionName(version) {
     "originalShortest",
   ];
   return validVersions.includes(version);
+}
+
+export function countWords(s){
+  s = s.replace(/<[^>]*>/g, ""); // remove HTML tags
+    s = s.replace(/(^\s*)|(\s*$)/gi,"");//exclude  start and end white-space
+    s = s.replace(/[ ]{2,}/gi," ");//2 or more space to 1
+    s = s.replace(/\n /,"\n"); // exclude newline with a start spacing
+    return s.split(' ').filter(function(str){return str!="";}).length;
+    //return s.split(' ').filter(String).length; - this can also be used
 }

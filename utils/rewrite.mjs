@@ -1,3 +1,5 @@
+import { countWords } from "./utils.mjs";
+
 const verySoftPrompt =
   "You are professional German journalist. Reframe and summarize this German news story with a more sensitive perspective, softening harsh language while ensuring all factual content remains. Your audience are people who are stressed, feel sad and anxious.";
 
@@ -16,7 +18,7 @@ const restriction_political_softer =
   " Ensure that the political or ideological descriptors are retained while still focusing on a softer approach. ";
 
 const summarization_shorter_original =
-  "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 120 words.";
+  "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most <<count>> words.";
 
 const summarization_shortest_original =
   "Your task is to generate a short german summary of a german news article. Focus on factual correctness. Summarize the german article below, delimited by triple backticks in at most 50 words.";
@@ -113,14 +115,24 @@ export function getPrompt(promptType, article) {
 
 export function getSummarizationPrompt(article, isVeryShort = false) {
   console.log("get summarization prompt");
-  const summarizationPrompt = isVeryShort
-    ? summarization_shortest_original
-    : summarization_shorter_original;
+  let summarizationPrompt = summarization_shortest_original;
+  if(!isVeryShort) {
+    const originalWordCount = countWords(article.content);
+    let summaryWordCount = 120;
+    if(originalWordCount > 400) {
+      summaryWordCount = 200;
+    } else if(originalWordCount > 240) {
+      summaryWordCount = Math.round(originalWordCount / 2);
+    }
+    console.log("original word count", originalWordCount, "summary word count", summaryWordCount);
+    summarizationPrompt = summarization_shorter_original;
+    summarizationPrompt = summarizationPrompt.replace("<<count>>", summaryWordCount);
+  }
 
   const finalPrompt =
     summarizationPrompt + getFormatInstructionWithArticle(article);
 
-  console.log("final prompt", finalPrompt);
+  // console.log("final prompt", finalPrompt);
   return finalPrompt;
 }
 
