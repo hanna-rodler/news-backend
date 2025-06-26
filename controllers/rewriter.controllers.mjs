@@ -239,18 +239,18 @@ async function rewriteArticle(articleId, version, client) {
       client
     );
     if (checkValidity(articles.softenedArticle)) {
-      console.log("softened Article is valid");
+      console.log("softened Article is valid", articles.softenedArticle.title);
       articles.summarizedShort = await summarize(
         articleId,
         version + "Short",
-        articles.softenedArticle,
-        client
+        client,
+        articles.softenedArticle
       );
       articles.summarizedShortest = await summarize(
         articleId,
         version + "Shortest",
-        articles.softenedArticle,
-        client
+        client,
+        articles.softenedArticle
       );
     } else {
       return {
@@ -292,14 +292,14 @@ async function rewriteArticle(articleId, version, client) {
           articles.summarizedShortNums = await summarize(
             articleId,
             version + "Short" + "Nums",
+            client,
             articles.softenedArticleNums,
-            client
           );
           articles.summarizedShortestNums = await summarize(
             articleId,
             version + "Shortest" + "Nums",
+            client,
             articles.softenedArticleNums,
-            client
           );
         } else {
           return {

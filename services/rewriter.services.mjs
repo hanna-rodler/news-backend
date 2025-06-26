@@ -100,7 +100,7 @@ export const summarize = async (articleId, version, client, article = null) => {
       version: version,
     });
     if (!existingArticle) {
-      if (!article) {
+      if (article === null) {
         let baseVersion = "original";
         if (version.includes("softer")) {
           baseVersion = "softer";
@@ -163,7 +163,7 @@ async function rewriteArticleMistral(userPrompt, client) {
 
     // console.log("got chat response", chatResponse);
 
-    console.log("rewrittenText", chatResponse.choices[0].message.content);
+    // console.log("rewrittenText", chatResponse.choices[0].message.content);
     let rewrittenText = JSON.parse(chatResponse.choices[0].message.content);
     console.log("rewrittenText parsed", rewrittenText.title);
     if (rewrittenText.hasCasualityNumbers === false) {
